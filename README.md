@@ -1,211 +1,96 @@
-# Office Document Skills for Claude Code
+# claude-office-skills
 
-Professional Office document creation and editing workflows for the command line, powered by Claude Code.
+A skills library that gives AI coding agents the ability to create and manipulate Office documents -- PowerPoint, Word, Excel, and PDF -- through structured, repeatable workflows.
 
-## What is this?
+## What this is
 
-This repository packages the same Office document manipulation skills used by [Claude desktop](https://support.claude.com/en/articles/12111783-create-and-edit-files-with-claude) for use with [Claude Code](https://docs.claude.com/en/docs/claude-code/overview) (the CLI version). You get the full power of Claude's document creation capabilities in your terminal, ready to integrate with scripts, CI/CD pipelines, or automated workflows.
+Each skill is a SKILL.md file that tells an agent exactly how to produce a specific type of document: which scripts to call, in what order, with what validation steps. The agent reads the skill, follows the workflow, and produces a polished document. No improvisation, no guessing at library APIs.
 
-## Supported Formats
+This project originated from Anthropic's internal [Office document skills](https://support.claude.com/en/articles/12111783-create-and-edit-files-with-claude) shipped with Claude desktop. It has since diverged significantly: the skills are restructured for portability across any agent that can read markdown and run shell commands, every workflow includes mandatory visual verification, and the project has its own governance driving it toward a zero-install architecture.
 
-- **PowerPoint (PPTX)** - Create presentations from scratch or templates, with HTML-to-PPTX conversion
-- **Word (DOCX)** - Edit documents with tracked changes, OOXML manipulation, redlining workflows
-- **Excel (XLSX)** - Build financial models with formulas, formatting, and zero-error validation
-- **PDF** - Fill forms, merge documents, extract data, convert to images
+## Supported formats
 
-## Key Capabilities
+| Format | Skill | Capabilities |
+|--------|-------|-------------|
+| **PowerPoint** | `public/pptx/` | Create from scratch (HTML-to-PPTX), from templates (inventory/replace), OOXML editing |
+| **Word** | `public/docx/` | Create (docx-js), edit (OOXML), redline with tracked changes |
+| **Excel** | `public/xlsx/` | Create/edit with openpyxl, formula recalculation, zero-error validation |
+| **PDF** | `public/pdf/` | Fill forms (fillable + non-fillable), merge, split, create (reportlab) |
 
-### PowerPoint
+## Prerequisites
 
-- **HTML-to-PPTX conversion** - Design slides in HTML/CSS, render to PPTX with full formatting
-- **Template-based creation** - Rearrange slides, replace text with JSON, preserve formatting
-- **Visual validation** - Generate thumbnail grids to catch text cutoff and layout issues
-- **OOXML editing** - Direct XML manipulation for precise control
-
-### Word
-
-- **Tracked changes (redlining)** - Professional document editing with change tracking
-- **OOXML manipulation** - Add comments, modify structure, preserve formatting
-- **Text extraction** - Export content with tracked changes preserved
-
-### Excel
-
-- **Formula-based models** - Working formulas with zero-error requirement
-- **Professional formatting** - Color-coded inputs/formulas, custom number formats
-- **Data validation** - Years as text, zeros formatted as "-", proper cell styling
-
-### PDF
-
-- **Form filling** - Populate fillable PDFs programmatically
-- **Document merging** - Combine multiple PDFs
-- **Format conversion** - PPTX to PDF, PDF to images
-- **Data extraction** - Pull information from PDF forms and documents
-
-## Getting Started
-
-### Prerequisites
+Currently requires:
 
 ```bash
-# Python dependencies
-venv/bin/pip install -r requirements.txt
+# Python environment
+python3 -m venv venv && venv/bin/pip install -r requirements.txt
 
 # Node.js dependencies (for html2pptx)
 npm install
 
-# System tools (usually pre-installed)
-# - LibreOffice (soffice)
-# - Poppler (pdftoppm)
-# - Pandoc
+# System tools
+brew install libreoffice poppler pandoc
 ```
 
-### Using with Claude Code
+This is being simplified. The [zero-install migration](docs/epic/Active/(EPIC-001)-Zero-Install-Office-Skills/(EPIC-001)-Zero-Install-Office-Skills.md) will reduce prerequisites to three tools: `uv`, `deno`, and `libreoffice`. Python scripts will declare their own dependencies inline (PEP 723), Node.js moves to Deno, and system tools like poppler and pandoc get replaced by Python packages with bundled binaries.
 
-Simply tell Claude Code what you want to create:
+## Usage
+
+Tell your agent what you want:
 
 ```
 > Create a quarterly sales presentation with 5 slides
-> Create a powerpoint presentation based on @input/slide_notes.txt
-> Edit this Word document and add tracked changes
-> Build an Excel financial model for budget projections
-> Fill out this PDF form with data from this JSON
+> Edit this Word document and add tracked changes for sections 3 and 5
+> Fill out this PDF form with the data from applicant.json
+> Build an Excel budget model with these line items
 ```
 
-Claude Code will:
+The agent reads the appropriate SKILL.md, executes each step, visually verifies the output, and saves everything to `outputs/<document-name>/`.
 
-1. Check if a skill exists for your task
-2. Read the appropriate `SKILL.md` workflow
-3. Execute the workflow step-by-step
-4. Save all outputs to `outputs/<document-name>/`
+### Visual verification
 
-### Manual Usage
+Every document-producing workflow includes a mandatory render-and-inspect step. The agent converts output to images and checks for layout issues, text truncation, and formatting problems before declaring the task complete. Structural validation alone is not sufficient -- a document can have valid XML and still look wrong.
 
-All scripts can also be run directly:
+For presentations, this is a two-pass process: thumbnail grid for layout overview, then per-slide renders at 200 DPI for detail checks.
 
-```bash
-# Create PowerPoint thumbnail grid
-venv/bin/python public/pptx/scripts/thumbnail.py template.pptx outputs/review/thumbnails
+See [ADR-003](docs/adr/Active/(ADR-003)-Visual-Verification-Required.md) for the rationale.
 
-# Rearrange slides
-venv/bin/python public/pptx/scripts/rearrange.py template.pptx outputs/deck/final.pptx 0,5,5,12,3
+## Architecture decisions
 
-# Extract text inventory
-venv/bin/python public/pptx/scripts/inventory.py deck.pptx outputs/deck/inventory.json
+| ADR | Decision |
+|-----|----------|
+| [ADR-001](docs/adr/Active/(ADR-001)-Run-First-No-Install.md) | **Run-first, no-install** -- uv for Python, Deno for Node.js, bundled alternatives for system tools |
+| [ADR-002](docs/adr/Active/(ADR-002)-Wrapper-Scripts-As-Skill-API.md) | **Wrapper scripts as skill API** -- `<skill>/bin/<command>` hides runtime details from agents |
+| [ADR-003](docs/adr/Active/(ADR-003)-Visual-Verification-Required.md) | **Visual verification required** -- agents must render and inspect output, not just validate structure |
 
-# Replace text from JSON
-venv/bin/python public/pptx/scripts/replace.py input.pptx outputs/deck/replacements.json outputs/deck/output.pptx
-```
-
-## Repository Structure
+## Repository structure
 
 ```
 public/
-├── pptx/           # PowerPoint workflows
-│   ├── SKILL.md    # Main workflow documentation
-│   ├── html2pptx.md # HTML-to-PPTX guide
-│   ├── ooxml.md    # OOXML editing guide
-│   └── scripts/    # Python/JS utilities
-├── docx/           # Word workflows
-├── pdf/            # PDF workflows
-└── xlsx/           # Excel workflows
+  pptx/         PowerPoint skill (SKILL.md, scripts/, ooxml/)
+  docx/         Word skill (SKILL.md, scripts/, ooxml/)
+  pdf/          PDF skill (SKILL.md, FORMS.md, REFERENCE.md, scripts/)
+  xlsx/         Excel skill (SKILL.md)
 
-outputs/            # Your generated documents (gitignored)
-└── <project-name>/ # One directory per document
+docs/
+  vision/       Product vision
+  epic/         Delivery epics
+  spec/         Implementation specs
+  adr/          Architecture decisions
+  persona/      User personas
+  research/     Completed research spikes
+
+outputs/        Generated documents (gitignored)
 ```
 
-## How It Works
+## Roadmap
 
-Each format has a `SKILL.md` file that defines the workflow. Claude Code:
+**Zero-Install Office Skills** ([EPIC-001](docs/epic/Active/(EPIC-001)-Zero-Install-Office-Skills/(EPIC-001)-Zero-Install-Office-Skills.md)) -- eliminate all library installation steps. Python scripts get PEP 723 inline metadata, Node.js moves to Deno, each skill gets a `bin/` directory of wrapper scripts as the agent-facing API. Prerequisites shrink from five tools to three.
 
-1. **Checks for skills** - Before writing custom code, checks if a skill exists
-2. **Reads the skill** - Loads the complete workflow from `SKILL.md`
-3. **Follows the workflow** - Executes each step precisely
-4. **Validates outputs** - Runs validation scripts (OOXML formats)
-5. **Organizes files** - All outputs go to `outputs/<document-name>/`
+**Visual Verification Compliance** ([EPIC-002](docs/epic/Active/(EPIC-002)-Visual-Verification-Compliance/(EPIC-002)-Visual-Verification-Compliance.md)) -- complete. All SKILL.md files now include mandatory render-inspect-iterate loops.
 
-### Example: Creating a Presentation from Template
+## Origin and attribution
 
-```bash
-# 1. Extract template text
-venv/bin/python -m markitdown template.pptx
+This project began as a fork of the Office document skills bundled with [Claude desktop](https://support.claude.com/en/articles/12111783-create-and-edit-files-with-claude). The original scripts and workflows were authored by Anthropic's Claude. This fork has since taken its own direction -- restructured for agent portability, governed by its own vision and ADRs, and evolving toward a zero-install architecture.
 
-# 2. Generate thumbnails
-venv/bin/python public/pptx/scripts/thumbnail.py template.pptx outputs/sales-deck/thumbnails
-
-# 3. Rearrange slides
-venv/bin/python public/pptx/scripts/rearrange.py template.pptx outputs/sales-deck/working.pptx 0,15,15,23,8
-
-# 4. Extract text inventory
-venv/bin/python public/pptx/scripts/inventory.py outputs/sales-deck/working.pptx outputs/sales-deck/inventory.json
-
-# 5. Generate replacement JSON (with formatting)
-# Creates outputs/sales-deck/replacements.json
-
-# 6. Apply replacements
-venv/bin/python public/pptx/scripts/replace.py outputs/sales-deck/working.pptx outputs/sales-deck/replacements.json outputs/sales-deck/final.pptx
-```
-
-Claude Code handles all these steps automatically when you ask it to create a presentation.
-
-## Why Use This?
-
-### Desktop/Web Claude is Great For
-
-- Interactive document creation
-- Visual feedback during creation
-
-### Claude Code is Great For
-
-- **Automation** - Generate monthly reports, process batches of documents
-- **Custom workflows** - Combine with other tools (databases, APIs, scripts)
-- **Server environments** - Run headless without desktop GUI
-- **Template iteration** - Rapidly test changes to document templates
-
-## Use Cases
-
-- **Automated reporting** - Generate weekly/monthly presentations from database data
-- **Batch processing** - Convert 100 HTML pages to PPTX slides
-- Create sales decks based on product data you pulled from a RAG system
-- **Document pipelines** - Pull data → populate Excel → generate PDF → email
-- **API integration** - Webhook triggers document generation
-- learn how to build similar agents for other tasks
-
-## Documentation
-
-- **Getting started**: See `CLAUDE.md` for repository conventions
-- **Workflows**: Each `public/*/SKILL.md` defines complete workflows
-- **Skills system**: `skills-system.md` explains the skills-check pattern
-- **Claude Code docs**: [docs.claude.com/claude-code](https://docs.claude.com/en/docs/claude-code/overview)
-- **Desktop version**: [Create and edit files with Claude](https://support.claude.com/en/articles/12111783-create-and-edit-files-with-claude)
-
-## Output Directory Convention
-
-All generated files go to `outputs/<document-name>/`:
-
-```
-outputs/
-├── quarterly-sales-report/
-│   ├── final.pptx
-│   ├── thumbnails_grid.png
-│   ├── inventory.json
-│   └── replacements.json
-├── employee-handbook/
-│   ├── handbook.docx
-│   └── unpacked/
-└── budget-2024/
-    └── budget.xlsx
-```
-
-This keeps your working directory clean and makes automation easier.
-
-## Attribution
-
-Most scripts and workflows in this repository come directly from Claude (Anthropic's AI assistant) and are included here verbatim. If Anthropic wishes for this repository to be taken down, please contact me and I will comply immediately.
-
-## Contributing
-
-This is a skills repository. To add capabilities:
-
-1. Add scripts to `public/<format>/scripts/`
-2. Document in the appropriate `SKILL.md`
-3. Update `CLAUDE.md` with new commands
-4. Ensure validation scripts pass
+If Anthropic wishes for this repository to be taken down, please contact me and I will comply immediately.
