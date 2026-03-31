@@ -4,6 +4,10 @@ outputs/
 # Claude Code
 .claude/
 
+# Secrets
+.env
+.env.*
+
 # Python
 __pycache__/
 *.py[cod]
