@@ -6,7 +6,7 @@ A skills library that gives AI coding agents the ability to create and manipulat
 
 Each skill is a SKILL.md file that tells an agent exactly how to produce a specific type of document: which scripts to call, in what order, with what validation steps. The agent reads the skill, follows the workflow, and produces a polished document. No improvisation, no guessing at library APIs.
 
-This project originated from the Office document skills that ship inside [Claude desktop](https://support.claude.com/en/articles/12111783-create-and-edit-files-with-claude) (Anthropic's AI assistant app). Those skills are not published as a separate repository — they're bundled internally. This project extracts and extends them for use with any agent that can read markdown and run shell commands. It has since diverged significantly: mandatory visual verification across all workflows, its own governance (vision, ADRs, specs), and a roadmap toward zero-install architecture.
+Forked from [tfriedel/claude-office-skills](https://github.com/tfriedel/claude-office-skills), which extracted the Office document skills from [Claude desktop](https://support.claude.com/en/articles/12111783-create-and-edit-files-with-claude). This fork has since diverged significantly: skills restructured for portability across any agent runtime, mandatory visual verification across all workflows, its own governance (vision, ADRs, specs), and a roadmap toward zero-install architecture.
 
 ## Supported formats
 
@@ -184,6 +184,6 @@ Each format has a SKILL.md file that defines the workflow. The agent:
 
 ## Origin and attribution
 
-This project originated from the Office document skills bundled inside [Claude desktop](https://support.claude.com/en/articles/12111783-create-and-edit-files-with-claude), Anthropic's AI assistant app. Those skills are not published as a standalone repository -- they're part of Claude's internal tooling for document creation. This project extracts them and takes them in a different direction: agent-portable, governed by its own vision and ADRs, and evolving toward zero-install architecture.
+This project is a fork of [tfriedel/claude-office-skills](https://github.com/tfriedel/claude-office-skills), which extracted the Office document skills bundled inside [Claude desktop](https://support.claude.com/en/articles/12111783-create-and-edit-files-with-claude). This fork has since taken its own direction: restructured for agent portability, governed by its own vision and ADRs, and evolving toward a zero-install architecture.
 
 If Anthropic wishes for this repository to be taken down, please contact me and I will comply immediately.
