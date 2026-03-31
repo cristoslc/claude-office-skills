@@ -185,5 +185,3 @@ Each format has a SKILL.md file that defines the workflow. The agent:
 ## Origin and attribution
 
 This project is a fork of [tfriedel/claude-office-skills](https://github.com/tfriedel/claude-office-skills), which extracted the Office document skills bundled inside [Claude desktop](https://support.claude.com/en/articles/12111783-create-and-edit-files-with-claude). This fork has since taken its own direction: restructured for agent portability, governed by its own vision and ADRs, and evolving toward a zero-install architecture.
-
-If Anthropic wishes for this repository to be taken down, please contact me and I will comply immediately.
