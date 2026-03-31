@@ -6,7 +6,7 @@ A skills library that gives AI coding agents the ability to create and manipulat
 
 Each skill is a SKILL.md file that tells an agent exactly how to produce a specific type of document: which scripts to call, in what order, with what validation steps. The agent reads the skill, follows the workflow, and produces a polished document. No improvisation, no guessing at library APIs.
 
-This project originated from Anthropic's internal [Office document skills](https://support.claude.com/en/articles/12111783-create-and-edit-files-with-claude) shipped with Claude desktop. It has since diverged significantly: the skills are restructured for portability across any agent that can read markdown and run shell commands, every workflow includes mandatory visual verification, and the project has its own governance driving it toward a zero-install architecture.
+This project originated from the Office document skills that ship inside [Claude desktop](https://support.claude.com/en/articles/12111783-create-and-edit-files-with-claude) (Anthropic's AI assistant app). Those skills are not published as a separate repository — they're bundled internally. This project extracts and extends them for use with any agent that can read markdown and run shell commands. It has since diverged significantly: mandatory visual verification across all workflows, its own governance (vision, ADRs, specs), and a roadmap toward zero-install architecture.
 
 ## Supported formats
 
@@ -40,20 +40,97 @@ Tell your agent what you want:
 
 ```
 > Create a quarterly sales presentation with 5 slides
-> Edit this Word document and add tracked changes for sections 3 and 5
-> Fill out this PDF form with the data from applicant.json
-> Build an Excel budget model with these line items
+> Create a powerpoint presentation based on @input/slide_notes.txt
+> Edit this Word document and add tracked changes
+> Build an Excel financial model for budget projections
+> Fill out this PDF form with data from this JSON
 ```
 
-The agent reads the appropriate SKILL.md, executes each step, visually verifies the output, and saves everything to `outputs/<document-name>/`.
+The agent will:
+
+1. Read the appropriate SKILL.md workflow
+2. Execute each step (scripts, validation, rendering)
+3. Visually verify the output (render to images, inspect for issues)
+4. Save everything to `outputs/<document-name>/`
+
+### Manual usage
+
+All scripts can be run directly:
+
+```bash
+# Create PowerPoint thumbnail grid
+venv/bin/python public/pptx/scripts/thumbnail.py template.pptx outputs/review/thumbnails
+
+# Rearrange slides (duplicate, reorder, delete by 0-based index)
+venv/bin/python public/pptx/scripts/rearrange.py template.pptx outputs/deck/final.pptx 0,5,5,12,3
+
+# Extract text inventory from a presentation
+venv/bin/python public/pptx/scripts/inventory.py deck.pptx outputs/deck/inventory.json
+
+# Replace text from a JSON mapping
+venv/bin/python public/pptx/scripts/replace.py input.pptx outputs/deck/replacements.json outputs/deck/output.pptx
+
+# Extract text from any Office document
+venv/bin/python -m markitdown document.pptx
+```
+
+### Example: creating a presentation from a template
+
+```bash
+# 1. Extract template text
+venv/bin/python -m markitdown template.pptx
+
+# 2. Generate thumbnail grid for visual analysis
+venv/bin/python public/pptx/scripts/thumbnail.py template.pptx outputs/sales-deck/thumbnails
+
+# 3. Rearrange slides to match your outline
+venv/bin/python public/pptx/scripts/rearrange.py template.pptx outputs/sales-deck/working.pptx 0,15,15,23,8
+
+# 4. Extract text inventory (shapes and their current content)
+venv/bin/python public/pptx/scripts/inventory.py outputs/sales-deck/working.pptx outputs/sales-deck/inventory.json
+
+# 5. Create replacement JSON with new content + formatting
+# (agent generates outputs/sales-deck/replacements.json)
+
+# 6. Apply replacements
+venv/bin/python public/pptx/scripts/replace.py outputs/sales-deck/working.pptx outputs/sales-deck/replacements.json outputs/sales-deck/final.pptx
+
+# 7. Visual verification — thumbnail grid then per-slide renders
+venv/bin/python public/pptx/scripts/thumbnail.py outputs/sales-deck/final.pptx outputs/sales-deck/final-thumbnails
+soffice --headless --convert-to pdf --outdir outputs/sales-deck/ outputs/sales-deck/final.pptx
+pdftoppm -jpeg -r 200 outputs/sales-deck/final.pdf outputs/sales-deck/slide
+```
+
+The agent handles all of this automatically when you ask it to create a presentation.
 
 ### Visual verification
 
 Every document-producing workflow includes a mandatory render-and-inspect step. The agent converts output to images and checks for layout issues, text truncation, and formatting problems before declaring the task complete. Structural validation alone is not sufficient -- a document can have valid XML and still look wrong.
 
-For presentations, this is a two-pass process: thumbnail grid for layout overview, then per-slide renders at 200 DPI for detail checks.
+For presentations, this is a two-pass process: thumbnail grid for layout overview, then per-slide renders at 200 DPI for detail checks. Thumbnail grids are too low-resolution to catch fine text issues on their own.
 
 See [ADR-003](docs/adr/Active/(ADR-003)-Visual-Verification-Required.md) for the rationale.
+
+## Output directory convention
+
+All generated files go to `outputs/<document-name>/`:
+
+```
+outputs/
+├── quarterly-sales-report/
+│   ├── final.pptx
+│   ├── final-thumbnails.jpg
+│   ├── slide-1.jpg, slide-2.jpg, ...
+│   ├── inventory.json
+│   └── replacements.json
+├── employee-handbook/
+│   ├── handbook.docx
+│   └── unpacked/
+└── budget-2024/
+    └── budget.xlsx
+```
+
+This keeps your working directory clean and makes automation easier.
 
 ## Architecture decisions
 
@@ -83,14 +160,30 @@ docs/
 outputs/        Generated documents (gitignored)
 ```
 
+## How it works
+
+Each format has a SKILL.md file that defines the workflow. The agent:
+
+1. **Reads the skill** -- loads the complete workflow from SKILL.md
+2. **Follows the workflow** -- executes each step precisely
+3. **Validates structure** -- runs OOXML validation scripts where applicable
+4. **Verifies visually** -- renders output to images and inspects for problems
+5. **Organizes files** -- all outputs go to `outputs/<document-name>/`
+
 ## Roadmap
 
 **Zero-Install Office Skills** ([EPIC-001](docs/epic/Active/(EPIC-001)-Zero-Install-Office-Skills/(EPIC-001)-Zero-Install-Office-Skills.md)) -- eliminate all library installation steps. Python scripts get PEP 723 inline metadata, Node.js moves to Deno, each skill gets a `bin/` directory of wrapper scripts as the agent-facing API. Prerequisites shrink from five tools to three.
 
 **Visual Verification Compliance** ([EPIC-002](docs/epic/Active/(EPIC-002)-Visual-Verification-Compliance/(EPIC-002)-Visual-Verification-Compliance.md)) -- complete. All SKILL.md files now include mandatory render-inspect-iterate loops.
 
+## Documentation
+
+- **Project conventions**: See `AGENTS.md` (via `@AGENTS.md` in CLAUDE.md)
+- **Workflows**: Each `public/*/SKILL.md` defines complete workflows
+- **Project vision**: [PURPOSE.md](PURPOSE.md) and [VISION-001](docs/vision/Active/(VISION-001)-Office-Skills/(VISION-001)-Office-Skills.md)
+
 ## Origin and attribution
 
-This project began as a fork of the Office document skills bundled with [Claude desktop](https://support.claude.com/en/articles/12111783-create-and-edit-files-with-claude). The original scripts and workflows were authored by Anthropic's Claude. This fork has since taken its own direction -- restructured for agent portability, governed by its own vision and ADRs, and evolving toward a zero-install architecture.
+This project originated from the Office document skills bundled inside [Claude desktop](https://support.claude.com/en/articles/12111783-create-and-edit-files-with-claude), Anthropic's AI assistant app. Those skills are not published as a standalone repository -- they're part of Claude's internal tooling for document creation. This project extracts them and takes them in a different direction: agent-portable, governed by its own vision and ADRs, and evolving toward zero-install architecture.
 
 If Anthropic wishes for this repository to be taken down, please contact me and I will comply immediately.
