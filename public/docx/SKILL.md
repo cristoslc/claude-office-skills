@@ -58,6 +58,7 @@ When creating a new Word document from scratch, use **docx-js**, which allows yo
 1. **MANDATORY - READ ENTIRE FILE**: Read [`docx-js.md`](docx-js.md) (~500 lines) completely from start to finish. **NEVER set any range limits when reading this file.** Read the full file content for detailed syntax, critical formatting rules, and best practices before proceeding with document creation.
 2. Create a JavaScript/TypeScript file using Document, Paragraph, TextRun components (You can assume all dependencies are installed, but if not, refer to the dependencies section below)
 3. Export as .docx using Packer.toBuffer()
+4. **Visual Verification (mandatory)**: See [Visual Verification](#visual-verification-mandatory) below
 
 ## Editing an existing Word document
 
@@ -68,6 +69,7 @@ When editing an existing Word document, use the **Document library** (a Python l
 2. Unpack the document: `python ooxml/scripts/unpack.py <office_file> <output_directory>`
 3. Create and run a Python script using the Document library (see "Document Library" section in ooxml.md)
 4. Pack the final document: `python ooxml/scripts/pack.py <input_directory> <office_file>`
+5. **Visual Verification (mandatory)**: See [Visual Verification](#visual-verification-mandatory) below
 
 The Document library provides both high-level methods for common operations and direct DOM access for complex scenarios.
 
@@ -150,7 +152,34 @@ Example - Changing "30 days" to "60 days" in a sentence:
      grep "replacement phrase" verification.md  # Should find it
      ```
    - Check that no unintended changes were introduced
+   - **Visual Verification (mandatory)**: See [Visual Verification](#visual-verification-mandatory) below
 
+
+## Visual Verification (mandatory)
+
+After producing or editing any Word document, you **must** render it to images and visually inspect the result before declaring the task complete. Structural validation and text checks alone are not sufficient — they cannot catch layout issues, formatting problems, or rendering defects.
+
+1. **Convert to PDF**:
+   ```bash
+   soffice --headless --convert-to pdf --outdir outputs/<document-name>/ outputs/<document-name>/document.docx
+   ```
+
+2. **Convert PDF pages to images**:
+   ```bash
+   pdftoppm -jpeg -r 150 outputs/<document-name>/document.pdf outputs/<document-name>/page
+   ```
+
+3. **Read the page images** and check for:
+   - Text renders correctly (no garbled characters, correct fonts)
+   - Page layout is intact (margins, headers/footers, columns, page breaks)
+   - Tables and lists are properly formatted and aligned
+   - Tracked changes are visible and correctly marked (for redline workflow)
+   - No content is truncated or overflowing
+   - Images and embedded media display correctly
+
+4. **If issues are found**, fix the document and repeat from step 1.
+
+Do not skip this step. Do not declare the document complete after only text-based verification.
 
 ## Converting Documents to Images
 

@@ -157,15 +157,25 @@ When creating a new PowerPoint presentation from scratch, use the **html2pptx** 
    - Use the `html2pptx()` function to process each HTML file
    - Add charts and tables to placeholder areas using PptxGenJS API
    - Save the presentation using `pptx.writeFile()`
-4. **Visual validation**: Generate thumbnails and inspect for layout issues
-   - Create thumbnail grid: `python scripts/thumbnail.py output.pptx workspace/thumbnails --cols 4`
-   - Read and carefully examine the thumbnail image for:
+4. **Visual validation (two-pass)**:
+
+   **Pass 1 — Layout scan** (thumbnail grid):
+   - Create thumbnail grid: `python scripts/thumbnail.py output.pptx outputs/<document-name>/thumbnails --cols 4`
+   - Read the grid and scan for gross layout issues: missing content, wrong slide order, obviously broken layouts, blank slides that should have content
+
+   **Pass 2 — Detail check** (per-slide render):
+   - Convert to PDF: `soffice --headless --convert-to pdf --outdir outputs/<document-name>/ outputs/<document-name>/output.pptx`
+   - Render at 200 DPI: `pdftoppm -jpeg -r 200 outputs/<document-name>/output.pdf outputs/<document-name>/slide`
+   - Read each slide image individually and check for:
      - **Text cutoff**: Text being cut off by header bars, shapes, or slide edges
      - **Text overlap**: Text overlapping with other text or shapes
      - **Positioning issues**: Content too close to slide boundaries or other elements
      - **Contrast issues**: Insufficient contrast between text and backgrounds
+     - **Font rendering**: Text legible at intended size, no substitution artifacts
    - If issues found, adjust HTML margins/spacing/colors and regenerate the presentation
    - Repeat until all slides are visually correct
+
+   **Important**: Thumbnail grids are too low-resolution to catch fine text issues. Always do the per-slide detail check — the grid alone is not sufficient.
 
 ## Editing an existing PowerPoint presentation
 
@@ -177,6 +187,9 @@ When edit slides in an existing PowerPoint presentation, you need to work with t
 3. Edit the XML files (primarily `ppt/slides/slide{N}.xml` and related files)
 4. **CRITICAL**: Validate immediately after each edit and fix any validation errors before proceeding: `python ooxml/scripts/validate.py <dir> --original <file>`
 5. Pack the final presentation: `python ooxml/scripts/pack.py <input_directory> <office_file>`
+6. **Visual Verification (mandatory, two-pass)**:
+   - **Layout scan**: `python scripts/thumbnail.py <office_file> outputs/<document-name>/thumbnails` — scan grid for gross layout issues
+   - **Detail check**: `soffice --headless --convert-to pdf --outdir outputs/<document-name>/ <office_file>` then `pdftoppm -jpeg -r 200 outputs/<document-name>/*.pdf outputs/<document-name>/slide` — read each slide image and check for text cutoff, broken layouts, misaligned elements, or missing content. If issues are found, unpack, fix, validate, repack, and re-verify.
 
 ## Creating a new PowerPoint presentation **using a template**
 
@@ -403,6 +416,10 @@ When you need to create a presentation that follows an existing template's desig
    ERROR: Replacement text made overflow worse in these shapes:
      - slide-0/shape-2: overflow worsened by 1.25" (was 0.00", now 1.25")
    ```
+
+8. **Visual Verification (mandatory, two-pass)**:
+   - **Layout scan**: `python scripts/thumbnail.py output.pptx outputs/<document-name>/final-thumbnails` — scan grid for gross layout issues, missing content, visible placeholders
+   - **Detail check**: `soffice --headless --convert-to pdf --outdir outputs/<document-name>/ output.pptx` then `pdftoppm -jpeg -r 200 outputs/<document-name>/*.pdf outputs/<document-name>/slide` — read each slide image and verify: all replaced text fits correctly, no placeholders remain visible, layouts match the template's design intent, no text is truncated or overflowing. If issues are found, adjust the replacement JSON (reduce text, change formatting) and re-run `replace.py`.
 
 ## Creating Thumbnail Grids
 

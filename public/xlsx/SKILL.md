@@ -143,6 +143,7 @@ This applies to ALL calculations - totals, percentages, ratios, differences, etc
      - `#DIV/0!`: Division by zero
      - `#VALUE!`: Wrong data type in formula
      - `#NAME?`: Unrecognized formula name
+7. **Visual Verification (mandatory)**: See [Visual Verification](#visual-verification-mandatory) below
 
 ### Creating new Excel files
 
@@ -199,6 +200,38 @@ new_sheet['A1'] = 'Data'
 
 wb.save('modified.xlsx')
 ```
+
+## Visual Verification (mandatory)
+
+After creating or editing any spreadsheet, you **must** render it to images and visually inspect the result before declaring the task complete. Structural checks (formula recalculation) catch calculation errors but cannot detect visual problems — truncated columns, broken charts, incorrect formatting, or layout issues.
+
+1. **Recalculate formulas first** (if applicable):
+   ```bash
+   python recalc.py outputs/<document-name>/workbook.xlsx
+   ```
+
+2. **Convert to PDF**:
+   ```bash
+   soffice --headless --convert-to pdf --outdir outputs/<document-name>/ outputs/<document-name>/workbook.xlsx
+   ```
+
+3. **Convert PDF to images**:
+   ```bash
+   pdftoppm -jpeg -r 150 outputs/<document-name>/workbook.pdf outputs/<document-name>/page
+   ```
+
+4. **Read the page images** and check for:
+   - Number formatting displays correctly (commas, decimals, currency symbols, no `####`)
+   - Color coding follows conventions (blue for inputs, black for formulas)
+   - Column widths accommodate all content (no truncation)
+   - Charts render with correct data, labels, and legends
+   - Merged cells display properly
+   - Conditional formatting is visible where expected
+   - Headers/footers and print areas are correct
+
+5. **If issues are found**, fix the workbook and repeat from step 1.
+
+Do not skip this step. Do not declare a spreadsheet task complete after only formula verification.
 
 ## Recalculating formulas
 

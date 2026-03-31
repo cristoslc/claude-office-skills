@@ -165,6 +165,30 @@ story.append(Paragraph("Content for page 2", styles['Normal']))
 doc.build(story)
 ```
 
+**Visual Verification (mandatory)**: After creating a PDF, render it to images and inspect the result. See [Visual Verification](#visual-verification-mandatory) below.
+
+## Visual Verification (mandatory)
+
+After creating or modifying any PDF, you **must** render it to images and visually inspect the result before declaring the task complete.
+
+1. **Convert PDF to images**:
+   ```bash
+   pdftoppm -jpeg -r 150 outputs/<document-name>/output.pdf outputs/<document-name>/page
+   ```
+
+2. **Read the page images** and check for:
+   - Text renders correctly (fonts, sizes, positioning)
+   - Page layout matches intent (margins, columns, spacing)
+   - Tables and graphics display properly
+   - Form fields are correctly filled (for form workflows)
+   - No content is truncated, overlapping, or misaligned
+
+3. **If issues are found**, fix the code or form data and regenerate.
+
+For form filling workflows specifically: render the **filled** PDF (not just the blank form) and verify that field values appear in the correct positions, at the correct size, and are fully legible.
+
+Do not skip this step. Do not declare a PDF task complete after only programmatic checks.
+
 ## Command-Line Tools
 
 ### pdftotext (poppler-utils)

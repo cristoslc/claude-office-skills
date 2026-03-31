@@ -74,6 +74,9 @@ Then analyze the images to determine the purpose of each form field (make sure t
 - Run the `fill_fillable_fields.py` script from this file's directory to create a filled-in PDF:
 `python scripts/fill_fillable_fields.py <input pdf> <field_values.json> <output pdf>`
 This script will verify that the field IDs and values you provide are valid; if it prints error messages, correct the appropriate fields and try again.
+- **Visual Verification (mandatory)**: Render the **filled** PDF to images and inspect the result:
+  `python scripts/convert_pdf_to_images.py <output pdf> <output_directory>/filled-pages`
+  Read the page images and verify that all field values appear correctly: text is legible, positioned within field boundaries, checkboxes/radios show the correct state, and no content is cut off. If issues are found, adjust `field_values.json` and re-run the fill script.
 
 # Non-fillable fields
 If the PDF doesn't have fillable form fields, you'll need to visually determine where the data should be added and create text annotations. Follow the below steps *exactly*. You MUST perform all of these steps to ensure that the the form is accurately completed. Details for each step are below.
@@ -202,4 +205,16 @@ If there are errors, reanalyze the relevant fields, adjust the bounding boxes, a
 
 ### Step 4: Add annotations to the PDF
 Run this script from this file's directory to create a filled-out PDF using the information in fields.json:
-`python scripts/fill_pdf_form_with_annotations.py <input_pdf_path> <path_to_fields.json> <output_pdf_path>
+`python scripts/fill_pdf_form_with_annotations.py <input_pdf_path> <path_to_fields.json> <output_pdf_path>`
+
+### Step 5: Visual Verification of filled output (mandatory)
+Render the **filled** PDF to images and compare against the original blank form:
+`python scripts/convert_pdf_to_images.py <output_pdf_path> <output_directory>/filled-pages`
+Read the filled page images and verify:
+- All annotation text appears within the intended bounding boxes
+- Text is legible and correctly sized
+- Checkbox marks are centered and visible
+- No annotations overlap with existing form labels or other content
+- Compare side-by-side with the original blank form images from Step 1
+
+If issues are found, adjust `fields.json` bounding boxes or text properties and repeat from Step 4.
