@@ -1,6 +1,6 @@
 # PURPOSE
 
-**claude-office-skills** is a skills library that gives AI coding agents the ability to create and manipulate Office documents — PowerPoint, Word, Excel, and PDF — through structured, repeatable workflows.
+**office-skills** is a skills library that gives AI coding agents the ability to create and manipulate Office documents — PowerPoint, Word, Excel, and PDF — through structured, repeatable workflows.
 
 ## Why this exists
 
