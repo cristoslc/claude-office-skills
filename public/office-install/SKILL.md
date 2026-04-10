@@ -41,6 +41,37 @@ Phase 0 determines which scenario applies. All later phases branch on it.
 
 Run these checks and record the results. Every later decision branches on them.
 
+### Legacy skill detection
+Check for old, deprecated individual office skills (`pptx`, `docx`, `pdf`, `xlsx`) in the standard skills paths. If found, ask the user if they want to uninstall them and replace them with the `office-skills` versions.
+
+**macOS / Linux:**
+```bash
+for skill in pptx docx pdf xlsx; do
+  if [ -d "$HOME/.agents/skills/$skill" ] || [ -d ".agents/skills/$skill" ]; then
+    echo "Legacy skill found: $skill"
+  fi
+done
+```
+
+**Windows (PowerShell):**
+```powershell
+$legacySkills = @("pptx", "docx", "pdf", "xlsx")
+$paths = @(
+    (Join-Path $env:USERPROFILE ".agents\skills"),
+    (Join-Path $PWD ".agents\skills")
+)
+foreach ($path in $paths) {
+    foreach ($skill in $legacySkills) {
+        $skillPath = Join-Path $path $skill
+        if (Test-Path $skillPath) {
+            Write-Host "Legacy skill found: $skill at $skillPath"
+        }
+    }
+}
+```
+
+If legacy skills are detected, **ask the user**: "I've detected old versions of Office skills (e.g., pptx, docx). Would you like to uninstall them and replace them with the new `office-skills` suite?" If yes, delete the folders before proceeding to Phase 1.
+
 ### Platform detection
 
 **macOS / Linux:**
