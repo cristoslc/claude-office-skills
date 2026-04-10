@@ -453,32 +453,70 @@ Report which capabilities are available and which are not. Frame missing capabil
 
 ---
 
-## Skills update — download or refresh from GitHub
+## Skills install and update — from GitHub
 
-The office-skills project lives at `https://github.com/cristoslc/office-skills`. This section handles getting the skills files (SKILL.md, scripts, schemas) onto disk when git is not available, and checking for updates.
+The office-skills project lives at `https://github.com/cristoslc/office-skills`. This section handles installing the skills (SKILL.md files, scripts, schemas) from the source repo and checking for updates.
 
-### Where skills live on disk
+### Source vs. install layout
 
-There are two install locations:
+This repository is the **source**. Skills are authored under `public/office-*/`. Each `public/office-*/` directory contains a `SKILL.md` entrypoint and supporting files (scripts, schemas, references).
 
-| Location | When to use | Path |
-|----------|-------------|------|
-| **Local (in-repo)** | Running from a git clone of office-skills | `./public/office-install/` (and other `public/office-*`) |
-| **Global (standalone)** | Running office-skills as a standalone tool, no clone | `~/.agents/skills/office-install/` (and other `~/.agents/skills/office-*`) |
+**Consumers install skills into the standard agent skills path.** The canonical install location is `.agents/skills/` — either project-local or global:
 
-In global mode, the entire `public/` directory tree from the repo is placed under `~/.agents/skills/`. The `tools/` directory and `paths.json` go inside `~/.agents/skills/office-install/tools/`.
+| Scope | Path | Used by |
+|-------|------|---------|
+| **Project-local** | `<repo-root>/.agents/skills/office-*/` | When office-skills is a dependency of another project |
+| **Global** | `~/.agents/skills/office-*/` | When office-skills is used standalone across projects |
 
-### Check if git is available
+The install process takes the `public/office-*/` directories from the source repo and places them at the standard `.agents/skills/` path. The `tools/` directory and `paths.json` live inside `office-install/tools/` — they are generated at install time, not shipped in the repo.
+
+### Install methods (ordered by preference)
+
+#### 1. `npx skills` (standard agent skills CLI)
+
+The [Vercel skills CLI](https://github.com/vercel-labs/skills) is the standard installer for the Agent Skills open format:
 
 ```bash
-command -v git &>/dev/null && echo "git available" || echo "no git"
+# Install all office-skills to .agents/skills/ (project-local)
+npx skills add cristoslc/office-skills --all
+
+# Install to global location
+npx skills add cristoslc/office-skills --all -g
+
+# Non-interactive (CI/CD)
+npx skills add cristoslc/office-skills --all -g -y
+
+# Install specific skills only
+npx skills add cristoslc/office-skills --skill office-install --skill office-pptx -g
 ```
 
-If git is available, prefer `git clone` or `git pull` — it handles incremental updates, diffs, and rollbacks.
+This is the preferred method. It reads the `SKILL.md` files from the repo and installs them to the correct path automatically.
 
-### Fresh download without git
+#### 2. Git clone (if git is available)
 
-Use the GitHub archive API to download a tarball of the repo and extract the `public/` directory:
+If git is installed, clone the repo and symlink the `public/` skill directories into `.agents/skills/`:
+
+```bash
+# Clone to a staging location (not directly into .agents/skills/)
+git clone https://github.com/cristoslc/office-skills.git /tmp/office-skills
+
+# Install each skill by symlinking from public/ to .agents/skills/
+SKILLS_DIR="$HOME/.agents/skills"
+mkdir -p "$SKILLS_DIR"
+for skill_dir in /tmp/office-skills/public/office-*/; do
+  skill_name=$(basename "$skill_dir")
+  ln -sf "$skill_dir" "$SKILLS_DIR/$skill_name"
+done
+
+# Record the installed version
+echo "$(git -C /tmp/office-skills rev-parse HEAD)" > "$SKILLS_DIR/office-install/.installed-sha"
+```
+
+For project-local installs, replace `SKILLS_DIR` with `<repo-root>/.agents/skills/`.
+
+#### 3. Direct download (no git, no npm)
+
+Download a tarball from GitHub and extract the `public/` skill directories to `.agents/skills/`:
 
 **macOS / Linux:**
 
@@ -486,26 +524,22 @@ Use the GitHub archive API to download a tarball of the repo and extract the `pu
 SKILLS_DIR="$HOME/.agents/skills"
 mkdir -p "$SKILLS_DIR"
 
-# Download the archive (trunk branch)
 echo "Downloading office-skills from GitHub..."
 curl -fSL "https://github.com/cristoslc/office-skills/archive/refs/heads/trunk.tar.gz" -o /tmp/office-skills.tar.gz
 
-# Extract only the public/ directory to the skills dir
+# Extract the public/ directory from the archive
 tar xzf /tmp/office-skills.tar.gz -C /tmp/ "office-skills-trunk/public"
 
-# Move public/ contents to the skills root
-# Each office-* directory becomes a top-level skill directory
+# Copy each skill directory to the standard install path
+# public/office-install/ -> .agents/skills/office-install/
+# public/office-pptx/    -> .agents/skills/office-pptx/
+# etc.
 cp -R /tmp/office-skills-trunk/public/ "$SKILLS_DIR/"
 
-# Also copy AGENTS.md and supporting files
-cp /tmp/office-skills-trunk/AGENTS.md "$SKILLS_DIR/" 2>/dev/null || true
-cp /tmp/office-skills-trunk/requirements.txt "$SKILLS_DIR/" 2>/dev/null || true
-
-# Clean up
 rm -rf /tmp/office-skills.tar.gz /tmp/office-skills-trunk
 
 # Record the installed version
-REMOTE_SHA=$(curl -fsSL "https://api.github.com/repos/cristoslc/office-skills/commits/trunk" | python3 -c "import json,sys; print(json.load(sys.stdin)['sha'])" 2>/dev/null || echo "unknown")
+REMOTE_SHA=$(curl -fsSL "https://api.github.com/repos/cristoslc/office-skills/commits/trunk" 2>/dev/null | python3 -c "import json,sys; print(json.load(sys.stdin)['sha'])" 2>/dev/null || echo "unknown")
 echo "$REMOTE_SHA" > "$SKILLS_DIR/office-install/.installed-sha"
 
 echo "Skills installed to $SKILLS_DIR/ (SHA: $REMOTE_SHA)"
@@ -525,14 +559,13 @@ Invoke-WebRequest $url -OutFile $zip
 Expand-Archive $zip $env:TEMP -Force
 $extracted = Join-Path $env:TEMP "office-skills-trunk\public"
 
-# Copy each skill directory
+# Copy each skill directory to the standard install path
 Copy-Item -Path "$extracted\office-*" -Destination $skillsDir -Recurse -Force
 
 # Record the installed version
 $sha = (Invoke-RestMethod -Uri "https://api.github.com/repos/cristoslc/office-skills/commits/trunk" -ErrorAction SilentlyContinue).sha
 if ($sha) { $sha | Out-File (Join-Path $skillsDir "office-install\.installed-sha") -Encoding utf8 }
 
-# Clean up
 Remove-Item $zip -Force
 Remove-Item (Join-Path $env:TEMP "office-skills-trunk") -Recurse -Force
 
@@ -541,71 +574,50 @@ Write-Host "Skills installed to $skillsDir"
 
 ### Check for updates
 
-Compare the local version against the latest on GitHub. The simplest check is the commit SHA of the `trunk` branch:
+Compare the local installed version against the latest commit on GitHub:
 
 ```bash
-REMOTE_SHA=$(curl -fsSL "https://api.github.com/repos/cristoslc/office-skills/commits/trunk" | python3 -c "import json,sys; print(json.load(sys.stdin)['sha'])" 2>/dev/null)
 LOCAL_SHA_FILE="$HOME/.agents/skills/office-install/.installed-sha"
 
 if [ -f "$LOCAL_SHA_FILE" ]; then
   LOCAL_SHA=$(cat "$LOCAL_SHA_FILE")
+  REMOTE_SHA=$(curl -fsSL "https://api.github.com/repos/cristoslc/office-skills/commits/trunk" | python3 -c "import json,sys; print(json.load(sys.stdin)['sha'])" 2>/dev/null)
   if [ "$REMOTE_SHA" = "$LOCAL_SHA" ]; then
     echo "Skills are up to date ($REMOTE_SHA)"
   else
     echo "Update available: local=$LOCAL_SHA remote=$REMOTE_SHA"
   fi
 else
-  echo "No local version recorded. Run the fresh download to install."
+  echo "No local version recorded. Run the install to get skills."
 fi
 ```
 
 ### Apply updates
 
-Updates use the same download-and-extract approach as a fresh install. The `public/` directories are overwritten in place. Tools and `paths.json` are preserved because they live inside `tools/` (which is not overwritten by the skill download).
+Re-run the same install method used originally. Tools and `paths.json` are preserved — they live inside `office-install/tools/` and are not overwritten by the skill download (the source repo does not contain a `tools/` directory).
 
-**macOS / Linux:**
-
-```bash
-SKILLS_DIR="$HOME/.agents/skills"
-
-# Get the latest commit SHA
-REMOTE_SHA=$(curl -fsSL "https://api.github.com/repos/cristoslc/office-skills/commits/trunk" | python3 -c "import json,sys; print(json.load(sys.stdin)['sha'])")
-
-# Download and extract (same as fresh download)
-curl -fSL "https://github.com/cristoslc/office-skills/archive/refs/heads/trunk.tar.gz" -o /tmp/office-skills.tar.gz
-tar xzf /tmp/office-skills.tar.gz -C /tmp/ "office-skills-trunk/public"
-cp -R /tmp/office-skills-trunk/public/ "$SKILLS_DIR/"
-cp /tmp/office-skills-trunk/AGENTS.md "$SKILLS_DIR/" 2>/dev/null || true
-cp /tmp/office-skills-trunk/requirements.txt "$SKILLS_DIR/" 2>/dev/null || true
-rm -rf /tmp/office-skills.tar.gz /tmp/office-skills-trunk
-
-# Record the installed version
-echo "$REMOTE_SHA" > "$SKILLS_DIR/office-install/.installed-sha"
-echo "Updated skills to $REMOTE_SHA"
-```
-
-**Using git (if available):**
+**Using `npx skills`:**
 
 ```bash
-SKILLS_DIR="$HOME/.agents/skills/office-skills"
-
-if [ -d "$SKILLS_DIR/.git" ]; then
-  # Existing clone — pull latest
-  git -C "$SKILLS_DIR" pull --ff-only
-else
-  # Fresh clone
-  git clone https://github.com/cristoslc/office-skills.git "$SKILLS_DIR"
-  # Then symlink or copy public/office-* to ~/.agents/skills/
-fi
+npx skills add cristoslc/office-skills --all -g -y
 ```
+
+**Using git (if installed from a clone):**
+
+```bash
+git -C /tmp/office-skills pull --ff-only
+# Re-symlink if needed
+```
+
+**Using direct download:** repeat the "Direct download" steps above.
 
 ### GitHub API rate limits
 
-Unauthenticated GitHub API requests are rate-limited to 60/hour. The commit-SHA check above uses one request. If you hit the limit:
+Unauthenticated GitHub API requests are rate-limited to 60/hour. The commit-SHA check uses one request. If you hit the limit:
 
-- Use the archive URL directly (no API call needed): `https://github.com/cristoslc/office-skills/archive/refs/heads/trunk.tar.gz`
+- Use the archive URL directly (no API call): `https://github.com/cristoslc/office-skills/archive/refs/heads/trunk.tar.gz`
 - For update checks without the API, compare the `last-modified` header of the archive URL against a stored timestamp
-- Or set `GITHUB_TOKEN` in the environment for 5000/hour rate limit
+- Set `GITHUB_TOKEN` in the environment for 5000/hour rate limit
 
 ### Offline / air-gapped environments
 

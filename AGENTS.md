@@ -28,9 +28,11 @@ public/
 ├── office-xlsx/           # Excel spreadsheet skills
 │   └── SKILL.md    # Main workflow documentation
 └── office-install/        # Environment setup skill
-    ├── SKILL.md    # Progressive install workflow
-    └── tools/     # Installed binaries (uv, deno, soffice)
-        └── paths.json  # Tool paths that other skills read
+    └── SKILL.md    # Progressive install workflow
+
+.agents/skills/office-install/
+└── tools/              # Generated at install time (gitignored)
+    └── paths.json      # Tool paths that other skills read
 
 outputs/            # All skill-generated documents (gitignored)
 └── <document-name>/ # One directory per document project
