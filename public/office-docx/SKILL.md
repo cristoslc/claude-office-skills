@@ -9,6 +9,22 @@ description: "Comprehensive document creation, editing, and analysis with suppor
 
 A user may ask you to create, edit, or analyze the contents of a .docx file. A .docx file is essentially a ZIP archive containing XML files and other resources that you can read or edit. You have different tools and workflows available for different tasks.
 
+## Output Directory Convention
+
+All files created using this workflow MUST be written to:
+
+    outputs/<document-name>/
+
+Where `<document-name>` is a descriptive, lowercase, hyphenated name.
+Examples: `outputs/employee-handbook/`, `outputs/contract-review/`
+
+Rules:
+1. Create the directory if it doesn't exist
+2. All intermediate files (unpacked XML, markdown extractions, scripts) go here
+3. Final output files go here
+4. Never write skill-generated files to the repository root or public/ directories
+5. Use descriptive names that clearly identify the document's purpose
+
 ## Workflow Decision Tree
 
 ### Reading/Analyzing Content

@@ -9,6 +9,22 @@ description: Comprehensive PDF manipulation toolkit for extracting text and tabl
 
 This guide covers essential PDF processing operations using Python libraries and command-line tools. For advanced features, JavaScript libraries, and detailed examples, see REFERENCE.md. If you need to fill out a PDF form, read FORMS.md and follow its instructions.
 
+## Output Directory Convention
+
+All files created using this workflow MUST be written to:
+
+    outputs/<document-name>/
+
+Where `<document-name>` is a descriptive, lowercase, hyphenated name.
+Examples: `outputs/project-proposal/`, `outputs/invoice-forms/`
+
+Rules:
+1. Create the directory if it doesn't exist
+2. All intermediate files (extracted text, images) go here
+3. Final output files go here
+4. Never write skill-generated files to the repository root or public/ directories
+5. Use descriptive names that clearly identify the document's purpose
+
 ## Quick Start
 
 ```python

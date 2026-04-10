@@ -1,313 +1,68 @@
 # AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance when working on the office-skills repository itself.
+
+## Governance: Skills are the Consumer API
+
+**Consumer-facing instructions live in SKILL.md files, not here.**
+
+AGENTS.md is for contributors working on this repository. Any convention,
+workflow, command, or instruction that consumer agents need to follow MUST
+be written to the appropriate SKILL.md file. If a consumer would need to
+know it, it doesn't belong in AGENTS.md.
+
+When in doubt, add it to the skill. AGENTS.md should never duplicate
+information that consumers need — it should only contain things relevant
+to developing the skills themselves.
+
+The reason is simple: AGENTS.md ships with the source repo and is not
+pulled down by consumers. SKILL.md files are the consumer-facing API.
+If a consumer agent can't find an instruction in a skill, it doesn't exist.
 
 ## Repository Overview
 
-This is a skills repository for Office document manipulation (PPTX, DOCX, XLSX, PDF). Each skill provides workflows, scripts, and documentation for working with specific file formats. The repository follows a pattern established in `skills-system.md` which defines mandatory workflows for document creation and editing.
+This is a skills repository for Office document manipulation (PPTX, DOCX,
+XLSX, PDF). Each skill provides workflows, scripts, and documentation for
+working with specific file formats.
 
 ## Repository Structure
 
 ```
 public/
-├── office-pptx/           # PowerPoint presentation skills
-│   ├── SKILL.md    # Main workflow documentation
-│   ├── ooxml.md    # OOXML editing guide
-│   ├── html2pptx.md # HTML-to-PPTX conversion guide
-│   ├── scripts/    # Python and JS utilities
-│   └── ooxml/      # OOXML validation and schemas
-├── office-docx/           # Word document skills
-│   ├── SKILL.md    # Main workflow documentation
-│   ├── ooxml.md    # OOXML editing guide
-│   ├── docx-js.md  # JavaScript library documentation
-│   └── scripts/    # Python utilities
-├── office-pdf/            # PDF manipulation skills
-│   ├── SKILL.md    # Main workflow documentation
-│   ├── REFERENCE.md # Advanced features and examples
-│   └── FORMS.md    # PDF form filling guide
-├── office-xlsx/           # Excel spreadsheet skills
-│   └── SKILL.md    # Main workflow documentation
-└── office-install/        # Environment setup skill
-    └── SKILL.md    # Progressive install workflow
+├── office-pptx/       # Presentation skills
+├── office-docx/       # Document skills
+├── office-pdf/        # PDF skills
+├── office-xlsx/       # Spreadsheet skills
+└── office-install/    # Environment setup skill
 
-.agents/skills/office-install/
-└── tools/              # Generated at install time (gitignored)
-    └── paths.json      # Tool paths that other skills read
-
-outputs/            # All skill-generated documents (gitignored)
-└── <document-name>/ # One directory per document project
-    ├── *.pptx      # Final outputs
-    ├── *.docx      # Final outputs
-    ├── *.pdf       # Final outputs
-    ├── *.xlsx      # Final outputs
-    ├── unpacked/   # Unpacked OOXML files
-    ├── *.json      # Inventories and replacements
-    ├── *.html      # HTML slides
-    └── images/     # Generated images
+skills-system.md       # Historical reference (system prompt source)
+PURPOSE.md             # Project identity and principles
 ```
 
-## Key Architecture Principles
+Skills are authored under `public/office-*/`. Each directory contains a
+`SKILL.md` entrypoint and supporting files (scripts, schemas, references).
+Consumers install skills to `.agents/skills/` — see `office-install/SKILL.md`
+for the install workflow.
 
-### Skills-Based System
-The repository follows a mandatory skills-check system (defined in `skills-system.md`):
-1. **Before writing ANY code**: Check if a skill exists for the task
-2. **If YES**: Read the corresponding SKILL.md and follow it exactly
-3. **If NO**: Only then proceed with custom code
+## Contributing
 
-This prevents reinventing workflows that already exist in the skills documentation.
-
-### Two-Phase Approach for Complex Operations
-Most OOXML editing workflows follow this pattern:
-1. **Unpack**: Extract the Office file to raw XML using `uv run ooxml/scripts/unpack.py`
-2. **Edit**: Modify XML files directly
-3. **Validate**: Check changes using `uv run ooxml/scripts/validate.py --original <file>`
-4. **Pack**: Repackage to Office file using `uv run ooxml/scripts/pack.py`
-
-### Read-First Policy
-All SKILL.md files must be read **completely** before starting work. Never set range limits when reading these files - they contain critical workflow steps and validation requirements.
-
-### Output Directory Convention
-**MANDATORY**: All files created or edited using any skill workflow MUST be written to:
-```
-outputs/<fitting-name-for-document>/
-```
-
-Where `<fitting-name-for-document>` is a descriptive, lowercase, hyphenated name for the document being worked on.
-
-**Examples**:
-- `outputs/quarterly-sales-report/` - for a sales presentation
-- `outputs/employee-handbook/` - for a Word document
-- `outputs/budget-2024/` - for an Excel file
-- `outputs/project-proposal/` - for a PDF document
-
-**Rules**:
-1. Create the outputs directory if it doesn't exist
-2. All intermediate files (unpacked XML, JSON inventories, HTML files, images, etc.) go in this directory
-3. Final output files (PPTX, DOCX, XLSX, PDF) go in this directory
-4. Never write skill-generated files to the repository root or public/ directories
-5. Use descriptive names that clearly identify the document's purpose
-
-## Tool Discovery
-
-All tools (uv, deno, soffice) are installed to `.agents/skills/office-install/tools/`. Their paths are recorded in `tools/paths.json`, which is the canonical source for tool locations.
-
-**To resolve a tool path**, read `paths.json` and use the value if non-null; otherwise fall back to PATH:
-
-```bash
-# Resolve a tool path from paths.json, falling back to PATH
-office_tool() {
-  local tool="$1"
-  local paths_file
-  for dir in ".agents/skills/office-install/tools" "$HOME/.agents/skills/office-install/tools"; do
-    if [ -f "$dir/paths.json" ]; then paths_file="$dir/paths.json"; break; fi
-  done
-  if [ -n "$paths_file" ]; then
-    local resolved
-    resolved=$(python3 -c "import json; d=json.load(open('$paths_file')); v=d.get('$tool'); print(v if v else '')" 2>/dev/null)
-    if [ -n "$resolved" ]; then echo "$resolved"; return; fi
-  fi
-  command -v "$tool"
-}
-
-UV="$(office_tool uv)"
-DENO="$(office_tool deno)"
-SOFFICE="$(office_tool soffice)"
-```
-
-**Important**: Always set `DENO_TLS_CA_STORE=system` before running deno (required for corporate networks).
-
-## Development Setup
-
-### Environment Setup
-Run the `office-install` skill to install all required tools to `.agents/skills/office-install/tools/` and generate `paths.json`. See `public/office-install/SKILL.md` for the full workflow.
-
-### Python Runtime
-All Python commands use `uv run` (no venv or system Python needed). The `uv` binary is located via `paths.json`:
-
-```bash
-# Run any Python script
-uv run public/office-pptx/scripts/inventory.py --help
-
-# Run with a specific package
-uv run --with rich python -c "import rich; print('ok')"
-```
-
-**CRITICAL**: Always use `uv run` for all Python commands. NEVER use system Python or assume a venv is activated. Resolve `uv` from `paths.json` first.
-
-### Node.js Dependencies
-JavaScript tools for html2pptx workflow use Deno (installed to `tools/`):
-
-```bash
-# Verify deno works
-DENO_TLS_CA_STORE=system deno eval "console.log('ok')"
-```
-
-### System Tools
-Required system dependencies (should be pre-installed or installed by `office-install`):
-- **LibreOffice**: `soffice` (for PDF conversion — installed to `tools/`)
-- **Poppler**: `pdftoppm` (for PDF to image conversion)
-- **Pandoc**: `pandoc` (for document text extraction)
-
-## Common Commands
-
-### PowerPoint (PPTX)
-
-**Text extraction**:
-```bash
-uv run --with markitdown python -m markitdown file.pptx
-```
-
-**Unpack for XML editing**:
-```bash
-uv run public/office-pptx/ooxml/scripts/unpack.py input.pptx outputs/<document-name>/unpacked/
-```
-
-**Validate after editing**:
-```bash
-uv run public/office-pptx/ooxml/scripts/validate.py outputs/<document-name>/unpacked/ --original input.pptx
-```
-
-**Repack to PPTX**:
-```bash
-uv run public/office-pptx/ooxml/scripts/pack.py outputs/<document-name>/unpacked/ outputs/<document-name>/final.pptx
-```
-
-**Create thumbnail grid for visual analysis**:
-```bash
-uv run public/office-pptx/scripts/thumbnail.py template.pptx outputs/<document-name>/thumbnails [--cols 4]
-```
-
-**Rearrange slides (duplicate, reorder, delete)**:
-```bash
-uv run public/office-pptx/scripts/rearrange.py template.pptx outputs/<document-name>/rearranged.pptx 0,5,5,12,3
-```
-
-**Extract text inventory**:
-```bash
-uv run public/office-pptx/scripts/inventory.py presentation.pptx outputs/<document-name>/inventory.json
-```
-
-**Replace text from JSON**:
-```bash
-uv run public/office-pptx/scripts/replace.py input.pptx outputs/<document-name>/replacements.json outputs/<document-name>/output.pptx
-```
-
-**Convert HTML to PPTX** (requires Deno):
-```bash
-DENO_TLS_CA_STORE=system deno run --allow-all script.js  # Uses html2pptx.js library
-```
-
-### Word Documents (DOCX)
-
-**Text extraction with tracked changes**:
-```bash
-pandoc --track-changes=all file.docx -o outputs/<document-name>/extracted.md
-```
-
-**Unpack/Validate/Pack**: Same pattern as PPTX above (use `outputs/<document-name>/` directory)
-
-### PDF
-
-**Merge PDFs**:
-```python
-from pypdf import PdfWriter, PdfReader
-writer = PdfWriter()
-for pdf in ["doc1.pdf", "doc2.pdf"]:
-    reader = PdfReader(pdf)
-    for page in reader.pages:
-        writer.add_page(page)
-with open("outputs/<document-name>/merged.pdf", "wb") as f:
-    writer.write(f)
-```
-
-**Convert PPTX to PDF** (for visual analysis):
-```bash
-soffice --headless --convert-to pdf --outdir outputs/<document-name>/ presentation.pptx
-```
-
-### Excel (XLSX)
-
-See `public/office-xlsx/SKILL.md` for comprehensive formula and formatting standards. Key principles:
-- Zero formula errors required
-- Color coding: Blue=inputs, Black=formulas, Green=internal links, Red=external links
-- Format zeros as "-" in number formatting
-- Years as text strings, not numbers
-
-## Critical Workflow Notes
-
-### PPTX Creation from Scratch
-1. Create output directory: `mkdir -p outputs/<document-name>/`
-2. Read `public/office-pptx/html2pptx.md` completely (no range limits)
-3. Design content-informed color palettes (don't use defaults blindly)
-4. Create HTML files for each slide in `outputs/<document-name>/` (720pt × 405pt for 16:9)
-5. Use `class="placeholder"` for charts/tables to be added via PptxGenJS
-6. Rasterize gradients and icons as PNG using Sharp, save to `outputs/<document-name>/images/`
-7. Generate presentation to `outputs/<document-name>/presentation.pptx` using `html2pptx.js` library
-8. Create thumbnail grid and validate visually for text cutoff, overlap, positioning issues
-9. Iterate until all slides are visually correct
-
-### PPTX Creation from Template
-1. Create output directory: `mkdir -p outputs/<document-name>/`
-2. Extract text: `uv run --with markitdown python -m markitdown template.pptx`
-3. Create thumbnail grid: `uv run public/office-pptx/scripts/thumbnail.py template.pptx outputs/<document-name>/template`
-4. Analyze template and save inventory to `outputs/<document-name>/template-inventory.md` (list ALL slides with 0-based indices)
-5. Create outline with template mapping (verify slide indices are within range)
-6. Rearrange slides: `uv run public/office-pptx/scripts/rearrange.py template.pptx outputs/<document-name>/working.pptx 0,34,34,50,52`
-7. Extract text inventory: `uv run public/office-pptx/scripts/inventory.py outputs/<document-name>/working.pptx outputs/<document-name>/text-inventory.json`
-8. Read entire `text-inventory.json` (no range limits)
-9. Generate replacement JSON to `outputs/<document-name>/replacements.json` with proper paragraph formatting (bold, bullets, alignment, colors)
-10. Apply replacements: `uv run public/office-pptx/scripts/replace.py outputs/<document-name>/working.pptx outputs/<document-name>/replacements.json outputs/<document-name>/final.pptx`
-
-**CRITICAL**: Shapes not listed in replacement JSON are automatically cleared. Only shapes with "paragraphs" field get new content.
-
-### DOCX Editing
-- **Someone else's document or formal docs**: Use "Redlining workflow" (tracked changes)
-- **Your own document + simple changes**: Use "Basic OOXML editing"
-- Always preserve existing formatting and document structure
-
-### File Organization
-All skill-based workflows follow the **Output Directory Convention** (see Key Architecture Principles above):
-- Working files → `outputs/<document-name>/`
-- Final outputs → `outputs/<document-name>/`
-- Never commit outputs to git (outputs/ is gitignored)
-
-## Validation is Mandatory
-
-After any OOXML editing (PPTX/DOCX), **always validate immediately**:
-```bash
-uv run public/[format]/ooxml/scripts/validate.py <dir> --original <file>
-```
-
-Fix validation errors before proceeding. Never pack a file without validating first.
-
-## Dependencies
-
-### Python Packages (requirements.txt)
-- **Office formats**: `python-pptx`, `openpyxl`, `pypdf`
-- **XML processing**: `defusedxml`, `lxml`
-- **Images**: `Pillow`, `pdf2image`
-- **Conversion**: `markitdown`
-- **Utilities**: `six`
-
-### Node.js Packages (package.json)
-- **Presentation generation**: `pptxgenjs` (v4.0.1)
-- **HTML rendering**: `playwright` (includes Chromium)
-- **Image processing**: `sharp`
-- **Icons**: `react`, `react-dom`, `react-icons`
-
-### System Tools
-- **LibreOffice**: `soffice` - PPTX to PDF conversion
-- **Poppler**: `pdftoppm` - PDF to image conversion
-- **Pandoc**: `pandoc` - Document text extraction with tracked changes
+When modifying skills:
+1. Read the existing SKILL.md files to understand established patterns
+2. Keep skills self-contained — a consumer should be able to follow a single
+   SKILL.md without cross-referencing AGENTS.md
+3. Test workflows end-to-end before committing changes
+4. Follow the code style below
 
 ## Code Style
 
-When generating code for document operations:
+When writing skill code (scripts, SKILL.md content):
 - Write concise code
 - Avoid verbose variable names
 - Minimize print statements
-- Follow existing patterns in scripts/
-Read **[PURPOSE.md](../../PURPOSE.md)** for this project's identity, worldview, and foundational principles.
+- Follow existing patterns in the skill directories
+
+Read **PURPOSE.md** for this project's identity, worldview, and foundational
+principles.
 
 <!-- swain governance — do not edit this block manually -->
 

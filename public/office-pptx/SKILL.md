@@ -9,6 +9,22 @@ description: "Presentation creation, editing, and analysis. When Claude needs to
 
 A user may ask you to create, edit, or analyze the contents of a .pptx file. A .pptx file is essentially a ZIP archive containing XML files and other resources that you can read or edit. You have different tools and workflows available for different tasks.
 
+## Output Directory Convention
+
+All files created using this workflow MUST be written to:
+
+    outputs/<document-name>/
+
+Where `<document-name>` is a descriptive, lowercase, hyphenated name.
+Examples: `outputs/quarterly-sales-report/`, `outputs/employee-handbook/`
+
+Rules:
+1. Create the directory if it doesn't exist
+2. All intermediate files (unpacked XML, JSON inventories, HTML, images) go here
+3. Final output files go here
+4. Never write skill-generated files to the repository root or public/ directories
+5. Use descriptive names that clearly identify the document's purpose
+
 ## Reading and analyzing content
 
 ### Text extraction

@@ -65,6 +65,22 @@ Unless otherwise stated by the user or existing template
 
 A user may ask you to create, edit, or analyze the contents of an .xlsx file. You have different tools and workflows available for different tasks.
 
+## Output Directory Convention
+
+All files created using this workflow MUST be written to:
+
+    outputs/<document-name>/
+
+Where `<document-name>` is a descriptive, lowercase, hyphenated name.
+Examples: `outputs/budget-2024/`, `outputs/quarterly-forecast/`
+
+Rules:
+1. Create the directory if it doesn't exist
+2. All intermediate files (CSV exports, recalc logs) go here
+3. Final output files go here
+4. Never write skill-generated files to the repository root or public/ directories
+5. Use descriptive names that clearly identify the document's purpose
+
 ## Important Requirements
 
 **LibreOffice Required for Formula Recalculation**: You can assume LibreOffice is installed for recalculating formula values using the `recalc.py` script. The script automatically configures LibreOffice on first run
