@@ -1,6 +1,20 @@
 # Changelog
 
-## [1.1.0] - 2026-04-09
+## [1.2.0] - 2026-04-10
+
+### Features
+
+#### Standalone Tool Distribution
+Rewrote the office-install skill to support standalone tool installs and proper skill distribution, enabling agentic setup without global system pollution.
+
+- Added legacy skill detection to office-install for smoother migrations.
+- Shipped deno.json and deno.lock within the office-install resources for reliable npm dependency resolution via Deno.
+- Migrated the project toolchain from venv/npm to uv/deno for faster, portable execution.
+
+### Supporting Changes
+
+- Migrated AGENTS.md to be contributor-only, moving all consumer-facing instructions into individual SKILL.md files.
+- Updated README.md to reflect the new portable toolchain and setup guidance.
 
 ### Features
 

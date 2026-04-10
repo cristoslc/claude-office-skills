@@ -1,5 +1,5 @@
 {
-  "nodeModulesDir": "auto",
+  "deno": "2.3.2",
   "imports": {
     "playwright": "npm:playwright@1.49.0",
     "sharp": "npm:sharp@0.33.5",

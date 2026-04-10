@@ -922,6 +922,9 @@ async function html2pptx(htmlFile, pres, options = {}) {
   try {
     // Use Chrome on macOS, default Chromium on Unix
     const launchOptions = { env: { TMPDIR: tmpDir } };
+    if (process.platform === 'win32') {
+      launchOptions.args = ['--remote-debugging-port=0'];
+    }
     if (process.platform === 'darwin') {
       launchOptions.channel = 'chrome';
     }

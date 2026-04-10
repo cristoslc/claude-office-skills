@@ -46,16 +46,8 @@ This repository packages the same Office document manipulation skills used by [C
 ### Prerequisites
 
 ```bash
-# Python dependencies
-venv/bin/pip install -r requirements.txt
-
-# Node.js dependencies (for html2pptx)
-npm install
-
-# System tools (usually pre-installed)
-# - LibreOffice (soffice)
-# - Poppler (pdftoppm)
-# - Pandoc
+# See office-install/SKILL.md for full setup guidance
+# The project now uses a portable toolchain (uv, deno)
 ```
 
 ### Using with Claude Code
@@ -83,16 +75,16 @@ All scripts can also be run directly:
 
 ```bash
 # Create PowerPoint thumbnail grid
-venv/bin/python public/office-pptx/scripts/thumbnail.py template.pptx outputs/review/thumbnails
+uv run public/office-pptx/scripts/thumbnail.py template.pptx outputs/review/thumbnails
 
 # Rearrange slides
-venv/bin/python public/office-pptx/scripts/rearrange.py template.pptx outputs/deck/final.pptx 0,5,5,12,3
+uv run public/office-pptx/scripts/rearrange.py template.pptx outputs/deck/final.pptx 0,5,5,12,3
 
 # Extract text inventory
-venv/bin/python public/office-pptx/scripts/inventory.py deck.pptx outputs/deck/inventory.json
+uv run public/office-pptx/scripts/inventory.py deck.pptx outputs/deck/inventory.json
 
 # Replace text from JSON
-venv/bin/python public/office-pptx/scripts/replace.py input.pptx outputs/deck/replacements.json outputs/deck/output.pptx
+uv run public/office-pptx/scripts/replace.py input.pptx outputs/deck/replacements.json outputs/deck/output.pptx
 ```
 
 ## Repository Structure
@@ -127,22 +119,22 @@ Each format has a `SKILL.md` file that defines the workflow. Claude Code:
 
 ```bash
 # 1. Extract template text
-venv/bin/python -m markitdown template.pptx
+uv run -m markitdown template.pptx
 
 # 2. Generate thumbnails
-venv/bin/python public/office-pptx/scripts/thumbnail.py template.pptx outputs/sales-deck/thumbnails
+uv run public/office-pptx/scripts/thumbnail.py template.pptx outputs/sales-deck/thumbnails
 
 # 3. Rearrange slides
-venv/bin/python public/office-pptx/scripts/rearrange.py template.pptx outputs/sales-deck/working.pptx 0,15,15,23,8
+uv run public/office-pptx/scripts/rearrange.py template.pptx outputs/sales-deck/working.pptx 0,15,15,23,8
 
 # 4. Extract text inventory
-venv/bin/python public/office-pptx/scripts/inventory.py outputs/sales-deck/working.pptx outputs/sales-deck/inventory.json
+uv run public/office-pptx/scripts/inventory.py outputs/sales-deck/working.pptx outputs/sales-deck/inventory.json
 
 # 5. Generate replacement JSON (with formatting)
 # Creates outputs/sales-deck/replacements.json
 
 # 6. Apply replacements
-venv/bin/python public/office-pptx/scripts/replace.py outputs/sales-deck/working.pptx outputs/sales-deck/replacements.json outputs/sales-deck/final.pptx
+uv run public/office-pptx/scripts/replace.py outputs/sales-deck/working.pptx outputs/sales-deck/replacements.json outputs/sales-deck/final.pptx
 ```
 
 Claude Code handles all these steps automatically when you ask it to create a presentation.
