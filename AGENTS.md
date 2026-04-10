@@ -34,6 +34,12 @@ public/
 ├── office-pdf/        # PDF skills
 ├── office-xlsx/       # Spreadsheet skills
 └── office-install/    # Environment setup skill
+    ├── resources/
+    │   ├── deno.json       # Shipped import map (8 npm deps)
+    │   └── deno.lock      # Integrity-pinned lock file (source, not build artifact)
+    └── scripts/
+        ├── officedeno     # Bash wrapper for global installs
+        └── officedeno.ps1 # PowerShell wrapper for global installs
 
 skills-system.md       # Historical reference (system prompt source)
 PURPOSE.md             # Project identity and principles
@@ -63,6 +69,31 @@ When writing skill code (scripts, SKILL.md content):
 
 Read **PURPOSE.md** for this project's identity, worldview, and foundational
 principles.
+
+## Primary target platform: Windows
+
+Windows is the primary target. All skill workflows must work on Windows
+without admin elevation — portable binaries only, installed to userspace
+(`.agents/skills/office-install/tools/`). When writing install steps or
+scripts, always provide PowerShell equivalents alongside bash.
+
+### Dependency resolution
+
+The `office-install` skill ships `deno.json` and `deno.lock` (integrity-pinned)
+in `public/office-install/resources/`. At install time, these are either copied
+to the project root (project-local) or adapted in-place (global install). Running
+`deno install` resolves all npm packages into `node_modules/` — no system
+Node.js or npm needed.
+
+When modifying `public/office-install/resources/deno.json` (adding/changing a
+package), you must regenerate the lock file:
+
+```bash
+deno install    # updates deno.lock with new integrity hashes
+```
+
+Commit both `resources/deno.json` and `resources/deno.lock` together. The lock file is a source
+file, not a build artifact.
 
 <!-- swain governance — do not edit this block manually -->
 

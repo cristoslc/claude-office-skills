@@ -39,5 +39,7 @@ Thumbs.db
 skills-lock.json
 ROADMAP.md
 
-# Deno
-deno.lock
+# Deno — root-level copies placed by office-install skill
+# (public/office-install/deno.json and deno.lock are tracked as source files)
+/deno.json
+/deno.lock

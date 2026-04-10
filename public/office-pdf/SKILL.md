@@ -328,6 +328,6 @@ with open("encrypted.pdf", "wb") as output:
 ## Next Steps
 
 - For advanced pypdfium2 usage, see REFERENCE.md
-- For JavaScript libraries (pdf-lib), see REFERENCE.md
+- For JavaScript libraries (pdf-lib, pdfjs-dist), see REFERENCE.md — these are available via `deno run` after running the `office-install` skill
 - If you need to fill out a PDF form, follow the instructions in FORMS.md
 - For troubleshooting guides, see REFERENCE.md

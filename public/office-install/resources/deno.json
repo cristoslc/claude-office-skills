@@ -7,6 +7,8 @@
     "react": "npm:react@19.0.0",
     "react-dom": "npm:react-dom@19.0.0",
     "react-icons": "npm:react-icons@5.4.0",
+    "pdf-lib": "npm:pdf-lib@1.17.1",
+    "pdfjs-dist": "npm:pdfjs-dist@4.9.124",
     "html2pptx": "./public/office-pptx/scripts/html2pptx.js"
   }
 }

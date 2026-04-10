@@ -169,9 +169,10 @@ When creating a new PowerPoint presentation from scratch, use the **html2pptx** 
    - Use `class="placeholder"` for areas where charts/tables will be added (render with gray background for visibility)
    - **CRITICAL**: Rasterize gradients and icons as PNG images FIRST using Sharp, then reference in HTML
    - **LAYOUT**: For slides with charts/tables/images, use either full-slide layout or two-column layout for better readability
-3. Create and run a JavaScript file using the [`html2pptx.js`](scripts/html2pptx.js) library to convert HTML slides to PowerPoint and save the presentation
-    - Run with: `DENO_TLS_CA_STORE=system deno run --allow-all --node-modules-dir=auto script.js`
-    - Use the `html2pptx()` function to process each HTML file
+ 3. Create and run a JavaScript file using the [`html2pptx.js`](scripts/html2pptx.js) library to convert HTML slides to PowerPoint and save the presentation
+     - Project install: `DENO_TLS_CA_STORE=system deno run --allow-all script.js`
+     - Global install: `DENO_TLS_CA_STORE=system ./officedeno run --allow-all script.js` (or `.\officedeno.ps1` on Windows)
+     - Use the `html2pptx()` function to process each HTML file
     - Add charts and tables to placeholder areas using PptxGenJS API
     - Save the presentation using `pptx.writeFile()`
 4. **Visual validation (two-pass)**:
@@ -505,16 +506,18 @@ pdftoppm -jpeg -r 150 -f 2 -l 5 template.pdf slide  # Converts only pages 2-5
 
 ## Dependencies
 
-Dependencies are resolved automatically via Deno (pinned in `deno.json` at the repo root). No `npm install` required.
+Dependencies are installed by the `office-install` skill. If scripts fail with module errors, re-run that skill's Phase 3.
 
-**npm packages** (auto-fetched by `deno run --node-modules-dir=auto`):
+**npm packages** (resolved by `deno install` via `deno.json`, integrity-pinned in `deno.lock`):
 - `pptxgenjs` — creating presentations via html2pptx
 - `playwright` — HTML rendering in html2pptx
 - `sharp` — SVG rasterization and image processing
 - `react`, `react-dom`, `react-icons` — icon rasterization scripts
+- `pdf-lib` — PDF creation and modification
+- `pdfjs-dist` — PDF text extraction
 
-**One-time setup** (same as system tools like soffice):
-- `npx playwright install chromium` — browser binary for Playwright (~150MB)
+**Browser binary** (installed by `office-install` Phase 3):
+- Playwright Chromium (~150MB) — for headless HTML rendering
 
 **Python packages** (via `uv run --with`):
 - `markitdown` — text extraction from presentations
