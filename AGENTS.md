@@ -10,23 +10,25 @@ This is a skills repository for Office document manipulation (PPTX, DOCX, XLSX, 
 
 ```
 public/
-├── pptx/           # PowerPoint presentation skills
+├── office-pptx/           # PowerPoint presentation skills
 │   ├── SKILL.md    # Main workflow documentation
 │   ├── ooxml.md    # OOXML editing guide
 │   ├── html2pptx.md # HTML-to-PPTX conversion guide
 │   ├── scripts/    # Python and JS utilities
 │   └── ooxml/      # OOXML validation and schemas
-├── docx/           # Word document skills
+├── office-docx/           # Word document skills
 │   ├── SKILL.md    # Main workflow documentation
 │   ├── ooxml.md    # OOXML editing guide
 │   ├── docx-js.md  # JavaScript library documentation
 │   └── scripts/    # Python utilities
-├── pdf/            # PDF manipulation skills
+├── office-pdf/            # PDF manipulation skills
 │   ├── SKILL.md    # Main workflow documentation
 │   ├── REFERENCE.md # Advanced features and examples
 │   └── FORMS.md    # PDF form filling guide
-└── xlsx/           # Excel spreadsheet skills
-    └── SKILL.md    # Main workflow documentation
+├── office-xlsx/           # Excel spreadsheet skills
+│   └── SKILL.md    # Main workflow documentation
+└── office-install/        # Environment setup skill
+    └── SKILL.md    # Progressive install workflow
 
 outputs/            # All skill-generated documents (gitignored)
 └── <document-name>/ # One directory per document project
@@ -118,37 +120,37 @@ venv/bin/python -m markitdown file.pptx
 
 **Unpack for XML editing**:
 ```bash
-venv/bin/python public/pptx/ooxml/scripts/unpack.py input.pptx outputs/<document-name>/unpacked/
+venv/bin/python public/office-pptx/ooxml/scripts/unpack.py input.pptx outputs/<document-name>/unpacked/
 ```
 
 **Validate after editing**:
 ```bash
-venv/bin/python public/pptx/ooxml/scripts/validate.py outputs/<document-name>/unpacked/ --original input.pptx
+venv/bin/python public/office-pptx/ooxml/scripts/validate.py outputs/<document-name>/unpacked/ --original input.pptx
 ```
 
 **Repack to PPTX**:
 ```bash
-venv/bin/python public/pptx/ooxml/scripts/pack.py outputs/<document-name>/unpacked/ outputs/<document-name>/final.pptx
+venv/bin/python public/office-pptx/ooxml/scripts/pack.py outputs/<document-name>/unpacked/ outputs/<document-name>/final.pptx
 ```
 
 **Create thumbnail grid for visual analysis**:
 ```bash
-venv/bin/python public/pptx/scripts/thumbnail.py template.pptx outputs/<document-name>/thumbnails [--cols 4]
+venv/bin/python public/office-pptx/scripts/thumbnail.py template.pptx outputs/<document-name>/thumbnails [--cols 4]
 ```
 
 **Rearrange slides (duplicate, reorder, delete)**:
 ```bash
-venv/bin/python public/pptx/scripts/rearrange.py template.pptx outputs/<document-name>/rearranged.pptx 0,5,5,12,3
+venv/bin/python public/office-pptx/scripts/rearrange.py template.pptx outputs/<document-name>/rearranged.pptx 0,5,5,12,3
 ```
 
 **Extract text inventory**:
 ```bash
-venv/bin/python public/pptx/scripts/inventory.py presentation.pptx outputs/<document-name>/inventory.json
+venv/bin/python public/office-pptx/scripts/inventory.py presentation.pptx outputs/<document-name>/inventory.json
 ```
 
 **Replace text from JSON**:
 ```bash
-venv/bin/python public/pptx/scripts/replace.py input.pptx outputs/<document-name>/replacements.json outputs/<document-name>/output.pptx
+venv/bin/python public/office-pptx/scripts/replace.py input.pptx outputs/<document-name>/replacements.json outputs/<document-name>/output.pptx
 ```
 
 **Convert HTML to PPTX** (requires Node.js):
@@ -191,7 +193,7 @@ pdftoppm -jpeg -r 150 file.pdf outputs/<document-name>/page
 
 ### Excel (XLSX)
 
-See `public/xlsx/SKILL.md` for comprehensive formula and formatting standards. Key principles:
+See `public/office-xlsx/SKILL.md` for comprehensive formula and formatting standards. Key principles:
 - Zero formula errors required
 - Color coding: Blue=inputs, Black=formulas, Green=internal links, Red=external links
 - Format zeros as "-" in number formatting
@@ -201,7 +203,7 @@ See `public/xlsx/SKILL.md` for comprehensive formula and formatting standards. K
 
 ### PPTX Creation from Scratch
 1. Create output directory: `mkdir -p outputs/<document-name>/`
-2. Read `public/pptx/html2pptx.md` completely (no range limits)
+2. Read `public/office-pptx/html2pptx.md` completely (no range limits)
 3. Design content-informed color palettes (don't use defaults blindly)
 4. Create HTML files for each slide in `outputs/<document-name>/` (720pt × 405pt for 16:9)
 5. Use `class="placeholder"` for charts/tables to be added via PptxGenJS
@@ -213,14 +215,14 @@ See `public/xlsx/SKILL.md` for comprehensive formula and formatting standards. K
 ### PPTX Creation from Template
 1. Create output directory: `mkdir -p outputs/<document-name>/`
 2. Extract text: `venv/bin/python -m markitdown template.pptx`
-3. Create thumbnail grid: `venv/bin/python public/pptx/scripts/thumbnail.py template.pptx outputs/<document-name>/template`
+3. Create thumbnail grid: `venv/bin/python public/office-pptx/scripts/thumbnail.py template.pptx outputs/<document-name>/template`
 4. Analyze template and save inventory to `outputs/<document-name>/template-inventory.md` (list ALL slides with 0-based indices)
 5. Create outline with template mapping (verify slide indices are within range)
-6. Rearrange slides: `venv/bin/python public/pptx/scripts/rearrange.py template.pptx outputs/<document-name>/working.pptx 0,34,34,50,52`
-7. Extract text inventory: `venv/bin/python public/pptx/scripts/inventory.py outputs/<document-name>/working.pptx outputs/<document-name>/text-inventory.json`
+6. Rearrange slides: `venv/bin/python public/office-pptx/scripts/rearrange.py template.pptx outputs/<document-name>/working.pptx 0,34,34,50,52`
+7. Extract text inventory: `venv/bin/python public/office-pptx/scripts/inventory.py outputs/<document-name>/working.pptx outputs/<document-name>/text-inventory.json`
 8. Read entire `text-inventory.json` (no range limits)
 9. Generate replacement JSON to `outputs/<document-name>/replacements.json` with proper paragraph formatting (bold, bullets, alignment, colors)
-10. Apply replacements: `venv/bin/python public/pptx/scripts/replace.py outputs/<document-name>/working.pptx outputs/<document-name>/replacements.json outputs/<document-name>/final.pptx`
+10. Apply replacements: `venv/bin/python public/office-pptx/scripts/replace.py outputs/<document-name>/working.pptx outputs/<document-name>/replacements.json outputs/<document-name>/final.pptx`
 
 **CRITICAL**: Shapes not listed in replacement JSON are automatically cleared. Only shapes with "paragraphs" field get new content.
 

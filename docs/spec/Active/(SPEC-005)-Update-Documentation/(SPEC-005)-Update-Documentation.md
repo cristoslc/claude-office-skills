@@ -13,6 +13,7 @@ parent-initiative: ""
 linked-artifacts: []
 depends-on-artifacts:
   - SPEC-004
+  - SPEC-006
 addresses: []
 evidence-pool: ""
 source-issue: ""
@@ -27,7 +28,7 @@ After SPEC-001 through SPEC-004, all invocation patterns have changed. Documenta
 
 ## Desired Outcomes
 
-A user reading any SKILL.md file sees simple `bin/<command>` invocations. The prerequisites section lists only `uv`, `deno`, and `LibreOffice`. No mention of venv, pip, npm, pdftoppm, or pandoc remains.
+A user reading any SKILL.md file sees simple `bin/<command>` invocations. The prerequisites section lists only `uv`, `deno`, and `LibreOffice`, and points to the install skill (`public/office-install/SKILL.md`) for setup. No mention of venv, pip, npm, pdftoppm, or pandoc remains.
 
 ## External Behavior
 
@@ -65,16 +66,16 @@ A user reading any SKILL.md file sees simple `bin/<command>` invocations. The pr
 
 **In scope:**
 - AGENTS.md (full rewrite of setup and commands sections)
-- `public/pptx/SKILL.md`
-- `public/pptx/html2pptx.md`
-- `public/pptx/ooxml.md`
-- `public/docx/SKILL.md`
-- `public/docx/ooxml.md`
-- `public/docx/docx-js.md`
-- `public/pdf/SKILL.md`
-- `public/pdf/REFERENCE.md`
-- `public/pdf/FORMS.md`
-- `public/xlsx/SKILL.md`
+- `public/office-pptx/SKILL.md`
+- `public/office-pptx/html2pptx.md`
+- `public/office-pptx/ooxml.md`
+- `public/office-docx/SKILL.md`
+- `public/office-docx/ooxml.md`
+- `public/office-docx/docx-js.md`
+- `public/office-pdf/SKILL.md`
+- `public/office-pdf/REFERENCE.md`
+- `public/office-pdf/FORMS.md`
+- `public/office-xlsx/SKILL.md`
 - `README.md`
 
 **Out of scope:**

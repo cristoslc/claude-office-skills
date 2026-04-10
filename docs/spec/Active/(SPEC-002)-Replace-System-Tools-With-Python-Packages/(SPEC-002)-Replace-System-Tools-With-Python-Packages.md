@@ -62,8 +62,8 @@ Users no longer need to install poppler or pandoc. The functionality runs via Py
 ## Scope & Constraints
 
 **In scope:**
-- `public/pdf/scripts/convert_pdf_to_images.py` — replace `pdf2image` (pdftoppm wrapper) with `pymupdf`
-- `public/pptx/scripts/thumbnail.py` — replace `pdf2image` dependency chain
+- `public/office-pdf/scripts/convert_pdf_to_images.py` — replace `pdf2image` (pdftoppm wrapper) with `pymupdf`
+- `public/office-pptx/scripts/thumbnail.py` — replace `pdf2image` dependency chain
 - DOCX text extraction workflow — replace `pandoc` subprocess call with `pypandoc-binary`
 
 **Out of scope:**

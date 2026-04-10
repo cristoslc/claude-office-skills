@@ -83,30 +83,31 @@ All scripts can also be run directly:
 
 ```bash
 # Create PowerPoint thumbnail grid
-venv/bin/python public/pptx/scripts/thumbnail.py template.pptx outputs/review/thumbnails
+venv/bin/python public/office-pptx/scripts/thumbnail.py template.pptx outputs/review/thumbnails
 
 # Rearrange slides
-venv/bin/python public/pptx/scripts/rearrange.py template.pptx outputs/deck/final.pptx 0,5,5,12,3
+venv/bin/python public/office-pptx/scripts/rearrange.py template.pptx outputs/deck/final.pptx 0,5,5,12,3
 
 # Extract text inventory
-venv/bin/python public/pptx/scripts/inventory.py deck.pptx outputs/deck/inventory.json
+venv/bin/python public/office-pptx/scripts/inventory.py deck.pptx outputs/deck/inventory.json
 
 # Replace text from JSON
-venv/bin/python public/pptx/scripts/replace.py input.pptx outputs/deck/replacements.json outputs/deck/output.pptx
+venv/bin/python public/office-pptx/scripts/replace.py input.pptx outputs/deck/replacements.json outputs/deck/output.pptx
 ```
 
 ## Repository Structure
 
 ```
 public/
-├── pptx/           # PowerPoint workflows
+├── office-pptx/           # PowerPoint workflows
 │   ├── SKILL.md    # Main workflow documentation
 │   ├── html2pptx.md # HTML-to-PPTX guide
 │   ├── ooxml.md    # OOXML editing guide
 │   └── scripts/    # Python/JS utilities
-├── docx/           # Word workflows
-├── pdf/            # PDF workflows
-└── xlsx/           # Excel workflows
+├── office-docx/           # Word workflows
+├── office-pdf/            # PDF workflows
+├── office-xlsx/           # Excel workflows
+└── office-install/        # Environment setup
 
 outputs/            # Your generated documents (gitignored)
 └── <project-name>/ # One directory per document
@@ -129,19 +130,19 @@ Each format has a `SKILL.md` file that defines the workflow. Claude Code:
 venv/bin/python -m markitdown template.pptx
 
 # 2. Generate thumbnails
-venv/bin/python public/pptx/scripts/thumbnail.py template.pptx outputs/sales-deck/thumbnails
+venv/bin/python public/office-pptx/scripts/thumbnail.py template.pptx outputs/sales-deck/thumbnails
 
 # 3. Rearrange slides
-venv/bin/python public/pptx/scripts/rearrange.py template.pptx outputs/sales-deck/working.pptx 0,15,15,23,8
+venv/bin/python public/office-pptx/scripts/rearrange.py template.pptx outputs/sales-deck/working.pptx 0,15,15,23,8
 
 # 4. Extract text inventory
-venv/bin/python public/pptx/scripts/inventory.py outputs/sales-deck/working.pptx outputs/sales-deck/inventory.json
+venv/bin/python public/office-pptx/scripts/inventory.py outputs/sales-deck/working.pptx outputs/sales-deck/inventory.json
 
 # 5. Generate replacement JSON (with formatting)
 # Creates outputs/sales-deck/replacements.json
 
 # 6. Apply replacements
-venv/bin/python public/pptx/scripts/replace.py outputs/sales-deck/working.pptx outputs/sales-deck/replacements.json outputs/sales-deck/final.pptx
+venv/bin/python public/office-pptx/scripts/replace.py outputs/sales-deck/working.pptx outputs/sales-deck/replacements.json outputs/sales-deck/final.pptx
 ```
 
 Claude Code handles all these steps automatically when you ask it to create a presentation.

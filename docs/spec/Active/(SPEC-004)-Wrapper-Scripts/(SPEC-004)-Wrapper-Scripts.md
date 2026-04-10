@@ -15,6 +15,7 @@ depends-on-artifacts:
   - SPEC-001
   - SPEC-002
   - SPEC-003
+  - SPEC-006
 addresses: []
 evidence-pool: ""
 source-issue: ""
@@ -25,7 +26,7 @@ swain-do: required
 
 ## Problem Statement
 
-After SPEC-001/002/003, scripts run via `uv run --with pkg1 --with pkg2 public/pptx/scripts/thumbnail.py` or `deno run --allow-all public/pptx/scripts/html2pptx.js`. These invocations are long, error-prone, and force agents to construct runtime-specific command lines. A `bin/` directory per skill with simple wrapper scripts provides a stable, agent-friendly API: `public/pptx/bin/thumbnail input.pptx output/`.
+After SPEC-001/002/003, scripts run via `uv run --with pkg1 --with pkg2 public/office-pptx/scripts/thumbnail.py` or `deno run --allow-all public/office-pptx/scripts/html2pptx.js`. These invocations are long, error-prone, and force agents to construct runtime-specific command lines. A `bin/` directory per skill with simple wrapper scripts provides a stable, agent-friendly API: `public/office-pptx/bin/thumbnail input.pptx output/`.
 
 ## Desired Outcomes
 
@@ -33,35 +34,79 @@ Each skill has a `bin/` directory containing short shell scripts that wrap the u
 
 ## External Behavior
 
-**Convention:** `public/<skill>/bin/<command>` — executable shell scripts that:
-1. Resolve their own directory to find the underlying script
-2. Invoke `uv run` or `deno run` with the correct flags
-3. Pass through all arguments
-4. Use `#!/usr/bin/env bash` shebang
+**Convention:** `public/<skill>/bin/<command>` — cross-platform wrapper scripts. Each command has two files:
+- `<command>` — bash script for macOS/Linux
+- `<command>.cmd` — cmd script for Windows
 
-**Example — `public/pptx/bin/thumbnail`:**
+Both resolve their own directory, locate the runtime binary (PATH or `tools/`), and pass through all arguments.
+
+### Tool discovery
+
+Wrappers locate `uv`, `deno`, and `soffice` using this search order:
+1. **Environment variable override**: `OFFICE_SKILLS_UV`, `OFFICE_SKILLS_DENO`, `OFFICE_SKILLS_SOFFICE`
+2. **Portable `tools/` directory**: `<repo-root>/tools/uv`, `<repo-root>/tools/deno`, etc.
+3. **System PATH**: fall back to globally installed binaries
+
+This allows the install skill (SPEC-006) to place portable binaries in `tools/` and have them work immediately without modifying PATH or environment.
+
+### Bash wrappers (macOS/Linux)
+
+**Example — `public/office-pptx/bin/thumbnail`:**
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-exec uv run "$SCRIPT_DIR/scripts/thumbnail.py" "$@"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+UV="${OFFICE_SKILLS_UV:-${REPO_ROOT}/tools/uv}"
+[ -x "$UV" ] || UV="uv"
+exec "$UV" run "$SCRIPT_DIR/scripts/thumbnail.py" "$@"
 ```
 
-The PEP 723 metadata in `thumbnail.py` declares its own deps — the wrapper just calls `uv run` and the script handles the rest.
-
-**Example — `public/pptx/bin/html2pptx`:**
+**Example — `public/office-pptx/bin/html2pptx`:**
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-exec deno run --allow-all "$SCRIPT_DIR/scripts/html2pptx.js" "$@"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+DENO="${OFFICE_SKILLS_DENO:-${REPO_ROOT}/tools/deno}"
+[ -x "$DENO" ] || DENO="deno"
+exec "$DENO" run --allow-all "$SCRIPT_DIR/scripts/html2pptx.js" "$@"
 ```
 
-**Example — `public/pptx/bin/markitdown`:**
+**Example — `public/office-pptx/bin/markitdown`:**
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-exec uvx markitdown "$@"
+REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
+UV="${OFFICE_SKILLS_UV:-${REPO_ROOT}/tools/uv}"
+[ -x "$UV" ] || UV="uvx"
+exec "$UV" markitdown "$@"
+```
+
+### Windows wrappers
+
+**Example — `public/office-pptx/bin/thumbnail.cmd`:**
+```cmd
+@echo off
+setlocal
+set "SCRIPT_DIR=%~dp0.."
+set "REPO_ROOT=%~dp0..\.."
+if defined OFFICE_SKILLS_UV (set "UV=%OFFICE_SKILLS_UV%") else (
+  if exist "%REPO_ROOT%\tools\uv.exe" (set "UV=%REPO_ROOT%\tools\uv.exe") else (set "UV=uv")
+)
+"%UV%" run "%SCRIPT_DIR%\scripts\thumbnail.py" %*
+```
+
+**Example — `public/office-pptx/bin/html2pptx.cmd`:**
+```cmd
+@echo off
+setlocal
+set "SCRIPT_DIR=%~dp0.."
+set "REPO_ROOT=%~dp0..\.."
+if defined OFFICE_SKILLS_DENO (set "DENO=%OFFICE_SKILLS_DENO%") else (
+  if exist "%REPO_ROOT%\tools\deno.exe" (set "DENO=%REPO_ROOT%\tools\deno.exe") else (set "DENO=deno")
+)
+"%DENO%" run --allow-all "%SCRIPT_DIR%\scripts\html2pptx.js" %*
 ```
 
 ## Acceptance Criteria
@@ -70,11 +115,15 @@ exec uvx markitdown "$@"
 
 2. **Given** any wrapper script, **when** run with `--help` or no args, **then** it passes through to the underlying script's usage message (no wrapper-specific help needed).
 
-3. **Given** a wrapper script, **when** inspected, **then** it is under 10 lines, uses `exec` to replace the shell process, and does not hardcode absolute paths.
+3. **Given** a wrapper script, **when** inspected, **then** it is under 15 lines, uses `exec` (bash) or direct invocation (cmd) to replace the shell process, and does not hardcode absolute paths.
 
 4. **Given** the wrapper convention, **when** an agent reads SKILL.md, **then** all invocation examples use `public/<skill>/bin/<command>` paths.
 
-5. **Given** all wrapper scripts, **when** `file public/*/bin/*` is run, **then** every file is executable (`chmod +x`).
+5. **Given** all wrapper scripts, **when** `file public/*/bin/*` is run, **then** every bash file is executable (`chmod +x`) and every Windows wrapper has a `.cmd` extension.
+
+6. **Given** portable binaries in `<repo-root>/tools/`, **when** a wrapper script is invoked, **then** it discovers and uses the portable binary without requiring PATH modifications.
+
+7. **Given** `OFFICE_SKILLS_UV` or `OFFICE_SKILLS_DENO` is set, **when** a wrapper script is invoked, **then** the environment variable takes precedence over `tools/` and PATH.
 
 ## Verification
 
@@ -127,14 +176,16 @@ exec uvx markitdown "$@"
 - Adding new functionality to scripts
 - Changing script arguments or output format
 - Creating a package manager or dependency resolver
+- Installing tools (handled by SPEC-006 install skill)
 
 ## Implementation Approach
 
 1. Create `bin/` directory in each skill under `public/`.
-2. Write wrapper scripts — each is a 4-6 line bash script using `exec`.
-3. `chmod +x` all wrappers.
-4. Verify each wrapper works end-to-end.
-5. Update SKILL.md files to reference wrappers (done in SPEC-005).
+2. Write bash wrappers with tool discovery (env var → `tools/` → PATH).
+3. Write matching `.cmd` wrappers for Windows with the same discovery logic.
+4. `chmod +x` all bash wrappers.
+5. Verify each wrapper works end-to-end (both with tools on PATH and with portable `tools/` binaries).
+6. Update SKILL.md files to reference wrappers (done in SPEC-005).
 
 ## Lifecycle
 

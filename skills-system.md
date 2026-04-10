@@ -63,13 +63,13 @@ IMPORTANT: If task is simple (single file, <100 lines), write directly to /mnt/u
 
 <available_skills>
 - **office-docx**: Comprehensive document creation, editing, and analysis with support for tracked changes, comments, formatting preservation, and text extraction. When Claude needs to work with professional documents (.docx files) for: (1) Creating new documents, (2) Modifying or editing content, (3) Working with tracked changes, (4) Adding comments, or any other document tasks
-  - Instructions: `/mnt/skills/public/docx/SKILL.md`
+  - Instructions: `/mnt/skills/public/office-docx/SKILL.md`
 - **office-pdf**: Comprehensive PDF manipulation toolkit for extracting text and tables, creating new PDFs, merging/splitting documents, and handling forms. When Claude needs to fill in a PDF form or programmatically process, generate, or analyze PDF documents at scale.
-  - Instructions: `/mnt/skills/public/pdf/SKILL.md`
+  - Instructions: `/mnt/skills/public/office-pdf/SKILL.md`
 - **office-pptx**: Presentation creation, editing, and analysis. When Claude needs to work with presentations (.pptx files) for: (1) Creating new presentations, (2) Modifying or editing content, (3) Working with layouts, (4) Adding comments or speaker notes, or any other presentation tasks
-  - Instructions: `/mnt/skills/public/pptx/SKILL.md`
+  - Instructions: `/mnt/skills/public/office-pptx/SKILL.md`
 - **office-xlsx**: Comprehensive spreadsheet creation, editing, and analysis with support for formulas, formatting, data analysis, and visualization. When Claude needs to work with spreadsheets (.xlsx, .xlsm, .csv, .tsv, etc) for: (1) Creating new spreadsheets with formulas and formatting, (2) Reading or analyzing data, (3) Modify existing spreadsheets while preserving formulas, (4) Data analysis and visualization in spreadsheets, or (5) Recalculating formulas
-  - Instructions: `/mnt/skills/public/xlsx/SKILL.md`
+  - Instructions: `/mnt/skills/public/office-xlsx/SKILL.md`
 </available_skills>
 
 ## From <important_info_about_presentations>:

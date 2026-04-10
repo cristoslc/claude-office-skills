@@ -61,7 +61,7 @@ Node.js scripts run via `deno run` with dependencies resolved from `deno.json`. 
 ## Scope & Constraints
 
 **In scope:**
-- `public/pptx/scripts/html2pptx.js` — ensure it runs under Deno
+- `public/office-pptx/scripts/html2pptx.js` — ensure it runs under Deno
 - Create `deno.json` with pinned npm dependency versions
 - Remove `package.json` and `package-lock.json`
 - Add `node_modules/` and `deno.lock` to `.gitignore`
@@ -75,7 +75,7 @@ Node.js scripts run via `deno run` with dependencies resolved from `deno.json`. 
 ## Implementation Approach
 
 1. Create `deno.json` with `nodeModulesDir: "auto"` and `imports` map pinning current package.json versions.
-2. Verify `deno run --allow-all public/pptx/scripts/html2pptx.js` works on a test HTML slide.
+2. Verify `deno run --allow-all public/office-pptx/scripts/html2pptx.js` works on a test HTML slide.
 3. Test icon rasterization workflow (react-icons → sharp → PNG).
 4. Update `.gitignore` for `node_modules/` and `deno.lock`.
 5. Remove `package.json`, `package-lock.json`.
