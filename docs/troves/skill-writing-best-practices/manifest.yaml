@@ -1,0 +1,71 @@
+id: skill-writing-best-practices
+created: 2026-04-10
+tags:
+  - skills
+  - skill-writing
+  - prompt-engineering
+  - agent-design
+  - claude
+  - progressive-disclosure
+  - SKILL.md
+  - context-engineering
+  - agentic-ai
+freshness-ttl: 90d
+
+sources:
+  - id: anthropic-best-practices
+    type: web
+    url: https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices
+    title: "Skill Authoring Best Practices"
+    fetched: 2026-04-10
+    hash: 8949e280a11e5b550435527e9bd8bfba27f83a6ecdb6b2f0eb9109ba755b4e69
+
+  - id: anthropic-code-skills-docs
+    type: web
+    url: https://code.claude.com/docs/en/skills
+    title: "Extend Claude with Skills — Claude Code Docs"
+    fetched: 2026-04-10
+    hash: 15ebd7f945c5e19426a445ceff0fca5cc13a8329367c4ce478ccb8acb663a998
+
+  - id: anthropic-engineering-blog
+    type: web
+    url: https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills
+    title: "Equipping Agents for the Real World with Agent Skills"
+    fetched: 2026-04-10
+    hash: df0210dc292150b289d91b63500569b4463b3515f74d632283452ecf24a5bd71
+
+  - id: claude-help-center-skills
+    type: web
+    url: https://support.claude.com/en/articles/12512198-how-to-create-custom-skills
+    title: "How to Create Custom Skills — Claude Help Center"
+    fetched: 2026-04-10
+    hash: 4f6c043f5cc73652a98858c52d378554de512cb6d8ebf89afc6925e9ae1b7171
+
+  - id: analytics-vidhya-skills-explained
+    type: web
+    url: https://www.analyticsvidhya.com/blog/2026/03/claude-skills-custom-skills-on-claude-code/
+    title: "Claude Skills Explained: Build, Configure, and Use Custom Skills on Claude Code"
+    fetched: 2026-04-10
+    hash: 0a4c2efad26d8df139609b24319daab949c697f4540c70e1b9400599ece1680b
+
+  - id: shanraisshan-best-practice-repo
+    type: web
+    url: https://github.com/shanraisshan/claude-code-best-practice
+    title: "Claude Code Best Practice — Community Best Practices Repository"
+    fetched: 2026-04-10
+    hash: 539bc17198f5c0c958691ef53d672152f3a7780bc674222e163a134cfb84d580
+
+  - id: google-adk-skills-progressive-disclosure
+    type: web
+    url: https://developers.googleblog.com/developers-guide-to-building-adk-agents-with-skills/
+    title: "Developer's Guide to Building ADK Agents with Skills"
+    fetched: 2026-04-10
+    hash: cba10f5365f8ee38d3798274b8eeeef3a131e6a3089eb54a746f5950496ec58b
+
+referenced-by: []
+
+history:
+  - event: created
+    date: 2026-04-10
+    commit: "--"
+    sources: 7
