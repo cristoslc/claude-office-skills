@@ -25,9 +25,9 @@
  *   { slide, placeholders } where placeholders is an array of { id, x, y, w, h }
  */
 
-const { chromium } = require('playwright');
-const path = require('path');
-const sharp = require('sharp');
+import { chromium } from 'playwright';
+import path from 'node:path';
+import sharp from 'sharp';
 
 const PT_PER_PX = 0.75;
 const PX_PER_IN = 96;
@@ -992,4 +992,4 @@ async function html2pptx(htmlFile, pres, options = {}) {
   }
 }
 
-module.exports = html2pptx;
+export default html2pptx;

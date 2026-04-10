@@ -114,10 +114,29 @@ const iconPath = await rasterizeIconPng(FaHome, "4472c4", "256", "home-icon.png"
 // Then reference in HTML: <img src="home-icon.png" style="width: 40pt; height: 40pt;">
 ```
 
+**With Deno (ESM)**, use `npm:` specifiers instead:
+
+```javascript
+import React from 'npm:react';
+import ReactDOMServer from 'npm:react-dom/server';
+import sharp from 'npm:sharp';
+import { FaHome } from 'npm:react-icons/fa';
+
+async function rasterizeIconPng(IconComponent, color, size = "256", filename) {
+  const svgString = ReactDOMServer.renderToStaticMarkup(
+    React.createElement(IconComponent, { color: `#${color}`, size: String(size) })
+  );
+  await sharp(Buffer.from(svgString)).png().toFile(filename);
+  return filename;
+}
+
+const iconPath = await rasterizeIconPng(FaHome, "4472c4", 256, "home-icon.png");
+```
+
 **Rasterizing Gradients with Sharp:**
 
 ```javascript
-const sharp = require('sharp');
+import sharp from 'sharp';
 
 async function createGradientBackground(filename) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="562.5">
@@ -185,16 +204,18 @@ h1 { color: #2d3748; font-size: 32pt; }
 
 ### Dependencies
 
-These libraries have been globally installed and are available to use:
+These libraries are resolved automatically via Deno's `npm:` specifiers (pinned in `deno.json`):
 - `pptxgenjs`
 - `playwright`
 - `sharp`
 
+Run with: `DENO_TLS_CA_STORE=system deno run --allow-all --node-modules-dir=auto script.js`
+
 ### Basic Usage
 
 ```javascript
-const pptxgen = require('pptxgenjs');
-const html2pptx = require('./html2pptx');
+import pptxgen from 'pptxgenjs';
+import html2pptx from './html2pptx.js';
 
 const pptx = new pptxgen();
 pptx.layout = 'LAYOUT_16x9';  // Must match HTML body dimensions
@@ -261,8 +282,8 @@ slide.addChart(pptx.charts.LINE, data, chartArea);
 ### Complete Example
 
 ```javascript
-const pptxgen = require('pptxgenjs');
-const html2pptx = require('./html2pptx');
+import pptxgen from 'pptxgenjs';
+import html2pptx from './html2pptx.js';
 
 async function createPresentation() {
     const pptx = new pptxgen();

@@ -154,9 +154,10 @@ When creating a new PowerPoint presentation from scratch, use the **html2pptx** 
    - **CRITICAL**: Rasterize gradients and icons as PNG images FIRST using Sharp, then reference in HTML
    - **LAYOUT**: For slides with charts/tables/images, use either full-slide layout or two-column layout for better readability
 3. Create and run a JavaScript file using the [`html2pptx.js`](scripts/html2pptx.js) library to convert HTML slides to PowerPoint and save the presentation
-   - Use the `html2pptx()` function to process each HTML file
-   - Add charts and tables to placeholder areas using PptxGenJS API
-   - Save the presentation using `pptx.writeFile()`
+    - Run with: `DENO_TLS_CA_STORE=system deno run --allow-all --node-modules-dir=auto script.js`
+    - Use the `html2pptx()` function to process each HTML file
+    - Add charts and tables to placeholder areas using PptxGenJS API
+    - Save the presentation using `pptx.writeFile()`
 4. **Visual validation (two-pass)**:
 
    **Pass 1 — Layout scan** (thumbnail grid):
@@ -488,13 +489,21 @@ pdftoppm -jpeg -r 150 -f 2 -l 5 template.pdf slide  # Converts only pages 2-5
 
 ## Dependencies
 
-Required dependencies (should already be installed):
+Dependencies are resolved automatically via Deno (pinned in `deno.json` at the repo root). No `npm install` required.
 
-- **markitdown**: `pip install "markitdown[pptx]"` (for text extraction from presentations)
-- **pptxgenjs**: `npm install -g pptxgenjs` (for creating presentations via html2pptx)
-- **playwright**: `npm install -g playwright` (for HTML rendering in html2pptx)
-- **react-icons**: `npm install -g react-icons react react-dom` (for icons)
-- **sharp**: `npm install -g sharp` (for SVG rasterization and image processing)
-- **LibreOffice**: `sudo apt-get install libreoffice` (for PDF conversion)
-- **Poppler**: `sudo apt-get install poppler-utils` (for pdftoppm to convert PDF to images)
-- **defusedxml**: `pip install defusedxml` (for secure XML parsing)
+**npm packages** (auto-fetched by `deno run --node-modules-dir=auto`):
+- `pptxgenjs` — creating presentations via html2pptx
+- `playwright` — HTML rendering in html2pptx
+- `sharp` — SVG rasterization and image processing
+- `react`, `react-dom`, `react-icons` — icon rasterization scripts
+
+**One-time setup** (same as system tools like soffice):
+- `npx playwright install chromium` — browser binary for Playwright (~150MB)
+
+**Python packages** (via `uv run --with`):
+- `markitdown` — text extraction from presentations
+- `defusedxml` — secure XML parsing
+
+**System tools**:
+- **LibreOffice**: `soffice` — PDF conversion
+- **Poppler**: `pdftoppm` — PDF to image conversion

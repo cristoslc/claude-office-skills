@@ -28,7 +28,9 @@ public/
 ├── office-xlsx/           # Excel spreadsheet skills
 │   └── SKILL.md    # Main workflow documentation
 └── office-install/        # Environment setup skill
-    └── SKILL.md    # Progressive install workflow
+    ├── SKILL.md    # Progressive install workflow
+    └── tools/     # Installed binaries (uv, deno, soffice)
+        └── paths.json  # Tool paths that other skills read
 
 outputs/            # All skill-generated documents (gitignored)
 └── <document-name>/ # One directory per document project
@@ -54,10 +56,10 @@ This prevents reinventing workflows that already exist in the skills documentati
 
 ### Two-Phase Approach for Complex Operations
 Most OOXML editing workflows follow this pattern:
-1. **Unpack**: Extract the Office file to raw XML using `venv/bin/python ooxml/scripts/unpack.py`
+1. **Unpack**: Extract the Office file to raw XML using `uv run ooxml/scripts/unpack.py`
 2. **Edit**: Modify XML files directly
-3. **Validate**: Check changes using `venv/bin/python ooxml/scripts/validate.py --original <file>`
-4. **Pack**: Repackage to Office file using `venv/bin/python ooxml/scripts/pack.py`
+3. **Validate**: Check changes using `uv run ooxml/scripts/validate.py --original <file>`
+4. **Pack**: Repackage to Office file using `uv run ooxml/scripts/pack.py`
 
 ### Read-First Policy
 All SKILL.md files must be read **completely** before starting work. Never set range limits when reading these files - they contain critical workflow steps and validation requirements.
@@ -83,31 +85,66 @@ Where `<fitting-name-for-document>` is a descriptive, lowercase, hyphenated name
 4. Never write skill-generated files to the repository root or public/ directories
 5. Use descriptive names that clearly identify the document's purpose
 
-## Development Setup
+## Tool Discovery
 
-### Python Environment
-The repository uses a Python virtual environment:
+All tools (uv, deno, soffice) are installed to `.agents/skills/office-install/tools/`. Their paths are recorded in `tools/paths.json`, which is the canonical source for tool locations.
+
+**To resolve a tool path**, read `paths.json` and use the value if non-null; otherwise fall back to PATH:
 
 ```bash
-# Install/update dependencies
-venv/bin/pip install -r requirements.txt
+# Resolve a tool path from paths.json, falling back to PATH
+office_tool() {
+  local tool="$1"
+  local paths_file
+  for dir in ".agents/skills/office-install/tools" "$HOME/.agents/skills/office-install/tools"; do
+    if [ -f "$dir/paths.json" ]; then paths_file="$dir/paths.json"; break; fi
+  done
+  if [ -n "$paths_file" ]; then
+    local resolved
+    resolved=$(python3 -c "import json; d=json.load(open('$paths_file')); v=d.get('$tool'); print(v if v else '')" 2>/dev/null)
+    if [ -n "$resolved" ]; then echo "$resolved"; return; fi
+  fi
+  command -v "$tool"
+}
+
+UV="$(office_tool uv)"
+DENO="$(office_tool deno)"
+SOFFICE="$(office_tool soffice)"
 ```
 
-**CRITICAL**: Always use `venv/bin/python` for all Python commands. NEVER use system Python or assume venv is activated. All Python commands in this document use explicit venv paths.
+**Important**: Always set `DENO_TLS_CA_STORE=system` before running deno (required for corporate networks).
 
-### Node.js Dependencies
-JavaScript tools for html2pptx workflow:
+## Development Setup
+
+### Environment Setup
+Run the `office-install` skill to install all required tools to `.agents/skills/office-install/tools/` and generate `paths.json`. See `public/office-install/SKILL.md` for the full workflow.
+
+### Python Runtime
+All Python commands use `uv run` (no venv or system Python needed). The `uv` binary is located via `paths.json`:
 
 ```bash
-# Install dependencies (includes playwright chromium browser)
-npm install
+# Run any Python script
+uv run public/office-pptx/scripts/inventory.py --help
+
+# Run with a specific package
+uv run --with rich python -c "import rich; print('ok')"
+```
+
+**CRITICAL**: Always use `uv run` for all Python commands. NEVER use system Python or assume a venv is activated. Resolve `uv` from `paths.json` first.
+
+### Node.js Dependencies
+JavaScript tools for html2pptx workflow use Deno (installed to `tools/`):
+
+```bash
+# Verify deno works
+DENO_TLS_CA_STORE=system deno eval "console.log('ok')"
 ```
 
 ### System Tools
-Required system dependencies (should be pre-installed):
-- LibreOffice: `soffice` (for PDF conversion)
-- Poppler: `pdftoppm` (for PDF to image conversion)
-- Pandoc: `pandoc` (for document text extraction)
+Required system dependencies (should be pre-installed or installed by `office-install`):
+- **LibreOffice**: `soffice` (for PDF conversion — installed to `tools/`)
+- **Poppler**: `pdftoppm` (for PDF to image conversion)
+- **Pandoc**: `pandoc` (for document text extraction)
 
 ## Common Commands
 
@@ -115,47 +152,47 @@ Required system dependencies (should be pre-installed):
 
 **Text extraction**:
 ```bash
-venv/bin/python -m markitdown file.pptx
+uv run --with markitdown python -m markitdown file.pptx
 ```
 
 **Unpack for XML editing**:
 ```bash
-venv/bin/python public/office-pptx/ooxml/scripts/unpack.py input.pptx outputs/<document-name>/unpacked/
+uv run public/office-pptx/ooxml/scripts/unpack.py input.pptx outputs/<document-name>/unpacked/
 ```
 
 **Validate after editing**:
 ```bash
-venv/bin/python public/office-pptx/ooxml/scripts/validate.py outputs/<document-name>/unpacked/ --original input.pptx
+uv run public/office-pptx/ooxml/scripts/validate.py outputs/<document-name>/unpacked/ --original input.pptx
 ```
 
 **Repack to PPTX**:
 ```bash
-venv/bin/python public/office-pptx/ooxml/scripts/pack.py outputs/<document-name>/unpacked/ outputs/<document-name>/final.pptx
+uv run public/office-pptx/ooxml/scripts/pack.py outputs/<document-name>/unpacked/ outputs/<document-name>/final.pptx
 ```
 
 **Create thumbnail grid for visual analysis**:
 ```bash
-venv/bin/python public/office-pptx/scripts/thumbnail.py template.pptx outputs/<document-name>/thumbnails [--cols 4]
+uv run public/office-pptx/scripts/thumbnail.py template.pptx outputs/<document-name>/thumbnails [--cols 4]
 ```
 
 **Rearrange slides (duplicate, reorder, delete)**:
 ```bash
-venv/bin/python public/office-pptx/scripts/rearrange.py template.pptx outputs/<document-name>/rearranged.pptx 0,5,5,12,3
+uv run public/office-pptx/scripts/rearrange.py template.pptx outputs/<document-name>/rearranged.pptx 0,5,5,12,3
 ```
 
 **Extract text inventory**:
 ```bash
-venv/bin/python public/office-pptx/scripts/inventory.py presentation.pptx outputs/<document-name>/inventory.json
+uv run public/office-pptx/scripts/inventory.py presentation.pptx outputs/<document-name>/inventory.json
 ```
 
 **Replace text from JSON**:
 ```bash
-venv/bin/python public/office-pptx/scripts/replace.py input.pptx outputs/<document-name>/replacements.json outputs/<document-name>/output.pptx
+uv run public/office-pptx/scripts/replace.py input.pptx outputs/<document-name>/replacements.json outputs/<document-name>/output.pptx
 ```
 
-**Convert HTML to PPTX** (requires Node.js):
+**Convert HTML to PPTX** (requires Deno):
 ```bash
-node script.js  # Uses html2pptx.js library
+DENO_TLS_CA_STORE=system deno run --allow-all script.js  # Uses html2pptx.js library
 ```
 
 ### Word Documents (DOCX)
@@ -186,11 +223,6 @@ with open("outputs/<document-name>/merged.pdf", "wb") as f:
 soffice --headless --convert-to pdf --outdir outputs/<document-name>/ presentation.pptx
 ```
 
-**Convert PDF to images**:
-```bash
-pdftoppm -jpeg -r 150 file.pdf outputs/<document-name>/page
-```
-
 ### Excel (XLSX)
 
 See `public/office-xlsx/SKILL.md` for comprehensive formula and formatting standards. Key principles:
@@ -214,15 +246,15 @@ See `public/office-xlsx/SKILL.md` for comprehensive formula and formatting stand
 
 ### PPTX Creation from Template
 1. Create output directory: `mkdir -p outputs/<document-name>/`
-2. Extract text: `venv/bin/python -m markitdown template.pptx`
-3. Create thumbnail grid: `venv/bin/python public/office-pptx/scripts/thumbnail.py template.pptx outputs/<document-name>/template`
+2. Extract text: `uv run --with markitdown python -m markitdown template.pptx`
+3. Create thumbnail grid: `uv run public/office-pptx/scripts/thumbnail.py template.pptx outputs/<document-name>/template`
 4. Analyze template and save inventory to `outputs/<document-name>/template-inventory.md` (list ALL slides with 0-based indices)
 5. Create outline with template mapping (verify slide indices are within range)
-6. Rearrange slides: `venv/bin/python public/office-pptx/scripts/rearrange.py template.pptx outputs/<document-name>/working.pptx 0,34,34,50,52`
-7. Extract text inventory: `venv/bin/python public/office-pptx/scripts/inventory.py outputs/<document-name>/working.pptx outputs/<document-name>/text-inventory.json`
+6. Rearrange slides: `uv run public/office-pptx/scripts/rearrange.py template.pptx outputs/<document-name>/working.pptx 0,34,34,50,52`
+7. Extract text inventory: `uv run public/office-pptx/scripts/inventory.py outputs/<document-name>/working.pptx outputs/<document-name>/text-inventory.json`
 8. Read entire `text-inventory.json` (no range limits)
 9. Generate replacement JSON to `outputs/<document-name>/replacements.json` with proper paragraph formatting (bold, bullets, alignment, colors)
-10. Apply replacements: `venv/bin/python public/office-pptx/scripts/replace.py outputs/<document-name>/working.pptx outputs/<document-name>/replacements.json outputs/<document-name>/final.pptx`
+10. Apply replacements: `uv run public/office-pptx/scripts/replace.py outputs/<document-name>/working.pptx outputs/<document-name>/replacements.json outputs/<document-name>/final.pptx`
 
 **CRITICAL**: Shapes not listed in replacement JSON are automatically cleared. Only shapes with "paragraphs" field get new content.
 
@@ -241,7 +273,7 @@ All skill-based workflows follow the **Output Directory Convention** (see Key Ar
 
 After any OOXML editing (PPTX/DOCX), **always validate immediately**:
 ```bash
-venv/bin/python public/[format]/ooxml/scripts/validate.py <dir> --original <file>
+uv run public/[format]/ooxml/scripts/validate.py <dir> --original <file>
 ```
 
 Fix validation errors before proceeding. Never pack a file without validating first.
