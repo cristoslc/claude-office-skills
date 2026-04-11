@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.2.1] - 2026-04-10
+
+### Features
+
+#### Windows-compatible browser launch for html2pptx
+
+Deno on Windows does not support the extra stdio pipes that Playwright's default browser launch requires, causing a `TypeError: Cannot read properties of undefined` crash. The new `launchBrowserWindows()` function bypasses this by spawning Chrome directly and connecting via the Chrome DevTools Protocol (CDP), scanning stderr for the WebSocket URL. This path is gated on `process.platform === 'win32'` — macOS and Linux continue using Playwright's standard launcher.
+
+- Converted `html2pptx.js` from ESM imports to CJS (`require`/`module.exports`) so Deno's CJS interop resolves bare module specifiers like `playwright` and `sharp` correctly. The skill is consumed via `require()` per the documented pattern; ESM added no value and broke that interop.
+- Added `process.env.TEMP` and `process.env.TMP` fallbacks to the `tmpDir` default, since Windows doesn't set `TMPDIR`.
+
+### Supporting Changes
+
+- Bumped minimum Pillow version from `>=10.0.0` to `>=10.2.0` to address CVE-2023-50447 (arbitrary code execution via `PIL.ImageMath.eval`).
+
 ## [1.2.0] - 2026-04-10
 
 ### Features
