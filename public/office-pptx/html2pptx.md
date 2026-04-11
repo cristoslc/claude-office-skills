@@ -114,7 +114,7 @@ const iconPath = await rasterizeIconPng(FaHome, "4472c4", "256", "home-icon.png"
 // Then reference in HTML: <img src="home-icon.png" style="width: 40pt; height: 40pt;">
 ```
 
-**With Deno (ESM)**, use `npm:` specifiers instead:
+**With Deno (ESM import map)**, use `npm:` specifiers if your script uses ESM:
 
 ```javascript
 import React from 'npm:react';
@@ -133,10 +133,12 @@ async function rasterizeIconPng(IconComponent, color, size = "256", filename) {
 const iconPath = await rasterizeIconPng(FaHome, "4472c4", 256, "home-icon.png");
 ```
 
+Note: `html2pptx.js` itself uses CJS (`require`/`module.exports`). Use `require('./html2pptx')` to import it, not ESM `import`.
+
 **Rasterizing Gradients with Sharp:**
 
 ```javascript
-import sharp from 'sharp';
+const sharp = require('sharp');
 
 async function createGradientBackground(filename) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="562.5">
@@ -204,18 +206,20 @@ h1 { color: #2d3748; font-size: 32pt; }
 
 ### Dependencies
 
-These libraries are resolved automatically via Deno's `npm:` specifiers (pinned in `deno.json`):
+These libraries are resolved via Deno's CJS interop (using `require()` and the import map in `office-install/resources/deno.json`):
 - `pptxgenjs`
 - `playwright`
 - `sharp`
 
 Run with: `DENO_TLS_CA_STORE=system deno run --allow-all --node-modules-dir=auto script.js`
 
+Note: `html2pptx.js` uses CJS (`require`/`module.exports`). Import it with `require('./html2pptx')`, not ESM `import`.
+
 ### Basic Usage
 
 ```javascript
-import pptxgen from 'pptxgenjs';
-import html2pptx from './html2pptx.js';
+const pptxgen = require('pptxgenjs');
+const html2pptx = require('./html2pptx');
 
 const pptx = new pptxgen();
 pptx.layout = 'LAYOUT_16x9';  // Must match HTML body dimensions
@@ -282,8 +286,8 @@ slide.addChart(pptx.charts.LINE, data, chartArea);
 ### Complete Example
 
 ```javascript
-import pptxgen from 'pptxgenjs';
-import html2pptx from './html2pptx.js';
+const pptxgen = require('pptxgenjs');
+const html2pptx = require('./html2pptx');
 
 async function createPresentation() {
     const pptx = new pptxgen();

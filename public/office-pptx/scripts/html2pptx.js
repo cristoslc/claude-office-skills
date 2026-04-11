@@ -25,13 +25,55 @@
  *   { slide, placeholders } where placeholders is an array of { id, x, y, w, h }
  */
 
-import { chromium } from 'playwright';
-import path from 'node:path';
-import sharp from 'sharp';
+const { chromium } = require('playwright');
+const path = require('path');
+const sharp = require('sharp');
+const { spawn } = require('child_process');
+const fs = require('fs');
 
 const PT_PER_PX = 0.75;
 const PX_PER_IN = 96;
 const EMU_PER_IN = 914400;
+
+async function launchBrowserWindows() {
+  const playwrightDir = path.join(process.env.LOCALAPPDATA || '', 'ms-playwright');
+  let chromiumExe;
+  if (fs.existsSync(playwrightDir)) {
+    const dirs = fs.readdirSync(playwrightDir).filter(d => d.startsWith('chromium'));
+    for (const dir of dirs.sort().reverse()) {
+      const candidate = path.join(playwrightDir, dir, 'chrome-win64', 'chrome.exe');
+      if (fs.existsSync(candidate)) { chromiumExe = candidate; break; }
+    }
+  }
+  if (!chromiumExe) {
+    throw new Error(
+      'Could not find Playwright Chromium. Run: deno run --allow-all npm:playwright install chromium'
+    );
+  }
+
+  return new Promise((resolve, reject) => {
+    const proc = spawn(chromiumExe, [
+      '--headless=new', '--remote-debugging-port=0',
+      '--no-sandbox', '--disable-gpu', '--no-first-run', '--disable-extensions',
+    ]);
+    let resolved = false;
+    const onData = (data) => {
+      const m = data.toString().match(/DevTools listening on (ws:\/\/\S+)/);
+      if (m && !resolved) {
+        resolved = true;
+        chromium.connectOverCDP(m[1]).then(browser => {
+          const origClose = browser.close.bind(browser);
+          browser.close = async (...args) => { await origClose(...args); proc.kill(); };
+          resolve(browser);
+        }).catch(reject);
+      }
+    };
+    proc.stderr.on('data', onData);
+    proc.stdout.on('data', onData);
+    proc.on('error', reject);
+    setTimeout(() => { if (!resolved) reject(new Error('Chrome did not start within 10s')); }, 10000);
+  });
+}
 
 // Helper: Get body dimensions and check for overflow
 async function getBodyDimensions(page) {
@@ -915,21 +957,19 @@ async function extractSlideData(page) {
 
 async function html2pptx(htmlFile, pres, options = {}) {
   const {
-    tmpDir = process.env.TMPDIR || '/tmp',
+    tmpDir = process.env.TMPDIR || process.env.TEMP || process.env.TMP || '/tmp',
     slide = null
   } = options;
 
   try {
-    // Use Chrome on macOS, default Chromium on Unix
     const launchOptions = { env: { TMPDIR: tmpDir } };
-    if (process.platform === 'win32') {
-      launchOptions.args = ['--remote-debugging-port=0'];
-    }
     if (process.platform === 'darwin') {
       launchOptions.channel = 'chrome';
     }
 
-    const browser = await chromium.launch(launchOptions);
+    const browser = process.platform === 'win32'
+      ? await launchBrowserWindows()
+      : await chromium.launch(launchOptions);
 
     let bodyDimensions;
     let slideData;
@@ -995,4 +1035,4 @@ async function html2pptx(htmlFile, pres, options = {}) {
   }
 }
 
-export default html2pptx;
+module.exports = html2pptx;
