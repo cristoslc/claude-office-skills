@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.2.2] - 2026-04-17
+
+### Fixes
+
+#### Deno 2 compatibility, BOM issues, and Playwright paths
+
+Fixed several compatibility and path issues in the html2pptx skill:
+
+- Fixed Playwright executable path resolution to work with Deno 2.x's updated module resolution
+- Resolved BOM (Byte Order Mark) issues when processing UTF-8 encoded files
+- Corrected platform detection for cross-platform browser launching
+
+### Documentation
+
+#### Non-interactive execution requirement
+
+Added documentation clarifying that all skill scripts must support non-interactive execution modes, ensuring reliable operation in automated and CI/CD environments.
+
 ## [1.2.1] - 2026-04-10
 
 ### Features
