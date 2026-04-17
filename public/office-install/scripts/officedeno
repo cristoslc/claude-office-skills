@@ -4,8 +4,9 @@ set -euo pipefail
 SKILL_ROOT="__SKILL_ROOT_PLACEHOLDER__"
 
 export DENO_TLS_CA_STORE=system
+export DENO_NODE_MODULES_DIR="$SKILL_ROOT"
 
 exec "$SKILL_ROOT/tools/deno" \
   --config "$SKILL_ROOT/deno.json" \
-  --node-modules-dir="$SKILL_ROOT" \
+  --node-modules-dir \
   "$@"

@@ -1,6 +1,6 @@
 # HTML to PowerPoint Guide
 
-Convert HTML slides to PowerPoint presentations with accurate positioning using the `html2pptx.js` library.
+Convert HTML slides to PowerPoint presentations with accurate positioning using the `html2pptx.cjs` library.
 
 ## Table of Contents
 
@@ -133,7 +133,7 @@ async function rasterizeIconPng(IconComponent, color, size = "256", filename) {
 const iconPath = await rasterizeIconPng(FaHome, "4472c4", 256, "home-icon.png");
 ```
 
-Note: `html2pptx.js` itself uses CJS (`require`/`module.exports`). Use `require('./html2pptx')` to import it, not ESM `import`.
+Note: `html2pptx.cjs` itself uses CJS (`require`/`module.exports`). Use `require('./html2pptx')` to import it, not ESM `import`.
 
 **Rasterizing Gradients with Sharp:**
 
@@ -213,7 +213,7 @@ These libraries are resolved via Deno's CJS interop (using `require()` and the i
 
 Run with: `DENO_TLS_CA_STORE=system deno run --allow-all --node-modules-dir=auto script.js`
 
-Note: `html2pptx.js` uses CJS (`require`/`module.exports`). Import it with `require('./html2pptx')`, not ESM `import`.
+Note: `html2pptx.cjs` uses CJS (`require`/`module.exports`). Import it with `require('./html2pptx')`, not ESM `import`.
 
 ### Basic Usage
 

@@ -41,7 +41,7 @@ async function launchBrowserWindows() {
   if (fs.existsSync(playwrightDir)) {
     const dirs = fs.readdirSync(playwrightDir).filter(d => d.startsWith('chromium'));
     for (const dir of dirs.sort().reverse()) {
-      const candidate = path.join(playwrightDir, dir, 'chrome-win64', 'chrome.exe');
+      const candidate = path.join(playwrightDir, dir, 'chrome-win', 'chrome.exe');
       if (fs.existsSync(candidate)) { chromiumExe = candidate; break; }
     }
   }
