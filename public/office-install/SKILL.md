@@ -12,6 +12,18 @@ This skill installs the tools required by the office-skills repository into a si
 - The user explicitly asks to set up the environment
 - You're operating in a new environment for the first time
 
+## Non-interactive execution
+
+**All command line calls must use non-interactive flags.** The user interacts with the agent, not the terminal. This means:
+
+- Use `-y`, `--yes`, `-f`, `--force`, `--no-pager`, and non-interactive equivalents whenever available
+- Never use `git commit` without `-m` (always provide the message)
+- Never use interactive `cp`, `mv`, or `rm` confirmations — use `-f` or equivalent
+- Pipe `yes |` to commands that stubbornly require confirmation when no flag exists
+- Always redirect output appropriately; if you need to see output, capture it and surface it to the user
+
+**The user should never see a prompt hang waiting for their input.** If a command blocks, you have failed this requirement.
+
 ## Tool home
 
 All tools are installed under:
@@ -154,6 +166,32 @@ fi
 
 If uv is already in `tools/` or on PATH (version 0.4+), skip to Phase 2.
 
+### Corporate network / TLS certificate support
+
+**uv does not use the system certificate store by default.** On corporate networks that proxy TLS with a self-signed certificate, uv will fail with certificate errors.
+
+Set this environment variable to tell uv to use the system native TLS certificates:
+
+```bash
+export UV_NATIVE_TLS=1
+```
+
+On Windows (PowerShell profile):
+
+```powershell
+[System.Environment]::SetEnvironmentVariable('UV_NATIVE_TLS', '1', 'User')
+```
+
+If that doesn't resolve it, use:
+
+```bash
+export UV_CERT=/path/to/corporate-ca.pem
+# or per-invocation:
+uv --cert /path/to/corporate-ca.pem ...
+```
+
+**Always set `UV_NATIVE_TLS=1` before running `uv` in this skill.** This uses the system certificate store which on corporate machines already has the corporate root certificate.
+
 ### Install to `tools/`
 
 **macOS / Linux:**
@@ -202,6 +240,8 @@ cp "$(command -v uv)" "$TOOLS_DIR/"
 ```
 
 ## Phase 2: JavaScript runtime — `deno`
+
+Required only for the `pptx` html2pptx workflow. If the user is only working with DOCX, PDF, or XLSX, skip this phase entirely.
 
 Required only for the `pptx` html2pptx workflow. If the user is only working with DOCX, PDF, or XLSX, skip this phase entirely.
 
@@ -358,7 +398,7 @@ Copy-Item (Join-Path $skillRoot "resources\deno.json") (Join-Path $PWD "deno.jso
 Copy-Item (Join-Path $skillRoot "resources\deno.lock") (Join-Path $PWD "deno.lock") -Force
 ```
 
-**Global case** — the shipped `deno.json` has `"html2pptx": "./public/office-pptx/scripts/html2pptx.js"` which is wrong for the global layout (where `public/` doesn't exist — the directory is `office-pptx/scripts/html2pptx.js` directly). Copy to skill root and rewrite the import path:
+**Global case** — the shipped `deno.json` has `"html2pptx": "./public/office-pptx/scripts/html2pptx.cjs"` which is wrong for the global layout (where `public/` doesn't exist — the directory is `office-pptx/scripts/html2pptx.cjs` directly). Copy to skill root and rewrite the import path:
 
 **macOS / Linux:**
 
@@ -368,7 +408,7 @@ cp "$SKILL_ROOT/resources/deno.lock" "$SKILL_ROOT/deno.lock"
 python3 -c "
 import json
 d = json.load(open('$SKILL_ROOT/deno.json'))
-d['imports']['html2pptx'] = './office-pptx/scripts/html2pptx.js'
+d['imports']['html2pptx'] = './office-pptx/scripts/html2pptx.cjs'
 json.dump(d, open('$SKILL_ROOT/deno.json', 'w'), indent=2)
 print(json.dumps(d, indent=2))
 "
@@ -381,8 +421,8 @@ Copy-Item (Join-Path $skillRoot "resources\deno.json") (Join-Path $skillRoot "de
 Copy-Item (Join-Path $skillRoot "resources\deno.lock") (Join-Path $skillRoot "deno.lock") -Force
 $denoJsonPath = Join-Path $skillRoot "deno.json"
 $denoJson = Get-Content $denoJsonPath -Raw | ConvertFrom-Json
-$denoJson.imports.html2pptx = "./office-pptx/scripts/html2pptx.js"
-$denoJson | ConvertTo-Json -Depth 10 | Set-Content $denoJsonPath
+$denoJson.imports.html2pptx = "./office-pptx/scripts/html2pptx.cjs"
+$denoJson | ConvertTo-Json -Depth 10 | Set-Content $denoJsonPath -Encoding UTF8NoBOM
 ```
 
 The `deno.lock` file does NOT need modification — it pins package integrity hashes, not import paths.
@@ -434,14 +474,16 @@ DENO_TLS_CA_STORE=system "$SKILL_ROOT/tools/deno" run --node-modules-dir=auto np
 **Global case:**
 
 ```bash
-DENO_TLS_CA_STORE=system "$SKILL_ROOT/tools/deno" run --config "$SKILL_ROOT/deno.json" --node-modules-dir="$SKILL_ROOT" npm:playwright install chromium
+export DENO_NODE_MODULES_DIR="$SKILL_ROOT"
+DENO_TLS_CA_STORE=system "$SKILL_ROOT/tools/deno" run --config "$SKILL_ROOT/deno.json" --node-modules-dir npm:playwright install chromium
 ```
 
 **Windows (PowerShell) — global case:**
 
 ```powershell
+$env:DENO_NODE_MODULES_DIR = $skillRoot
 $env:DENO_TLS_CA_STORE = "system"
-& "$skillRoot\tools\deno.exe" run --config "$skillRoot\deno.json" --node-modules-dir="$skillRoot" npm:playwright install chromium
+& "$skillRoot\tools\deno.exe" run --config "$skillRoot\deno.json" --node-modules-dir npm:playwright install chromium
 ```
 
 This downloads Chromium to a userspace cache (~150MB). No elevation needed.
@@ -470,7 +512,7 @@ fi
 if ($isGlobal) {
     $template = Get-Content (Join-Path $skillRoot "scripts\officedeno.ps1") -Raw
     $script = $template -replace '__SKILL_ROOT_PLACEHOLDER__', $skillRoot
-    $script | Set-Content (Join-Path $PWD "officedeno.ps1")
+    $script | Set-Content (Join-Path $PWD "officedeno.ps1") -Encoding UTF8NoBOM
 }
 ```
 
@@ -541,7 +583,7 @@ $env:DENO_TLS_CA_STORE = "system"
 "@
 ```
 
-For the global case, append `--config "$SKILL_ROOT/deno.json" --node-modules-dir="$SKILL_ROOT"` to each `deno` invocation.
+For the global case, append `--config "$SKILL_ROOT/deno.json" --node-modules-dir` to each `deno` invocation, and ensure `DENO_NODE_MODULES_DIR="$SKILL_ROOT"` is set.
 
 ## Phase 4: LibreOffice
 
@@ -766,7 +808,7 @@ $paths = @{
     }
 }
 
-$paths | ConvertTo-Json -Depth 3 | Set-Content (Join-Path $toolsDir "paths.json")
+$paths | ConvertTo-Json -Depth 3 | Set-Content (Join-Path $toolsDir "paths.json") -Encoding UTF8NoBOM
 ```
 
 **Always rewrite `paths.json` at the end of every run of this skill**, even if some tools were already present. This ensures the file stays in sync with what's actually installed.
