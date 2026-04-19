@@ -1,4 +1,6 @@
 {
+  "//": "Import map for office-skills npm dependencies. Source file — commit alongside deno.lock.",
+  "//2": "Copied to project root (project-local) or skill root (global) at install time.",
   "deno": "2.3.2",
   "imports": {
     "playwright": "npm:playwright@1.49.0",
@@ -9,6 +11,6 @@
     "react-icons": "npm:react-icons@5.4.0",
     "pdf-lib": "npm:pdf-lib@1.17.1",
     "pdfjs-dist": "npm:pdfjs-dist@4.9.124",
-    "html2pptx": "./public/office-pptx/scripts/html2pptx.cjs"
+    "html2pptx": "./office-pptx/scripts/html2pptx.cjs"
   }
 }

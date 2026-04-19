@@ -243,8 +243,6 @@ cp "$(command -v uv)" "$TOOLS_DIR/"
 
 Required only for the `pptx` html2pptx workflow. If the user is only working with DOCX, PDF, or XLSX, skip this phase entirely.
 
-Required only for the `pptx` html2pptx workflow. If the user is only working with DOCX, PDF, or XLSX, skip this phase entirely.
-
 ### Check
 
 ```bash
@@ -398,20 +396,13 @@ Copy-Item (Join-Path $skillRoot "resources\deno.json") (Join-Path $PWD "deno.jso
 Copy-Item (Join-Path $skillRoot "resources\deno.lock") (Join-Path $PWD "deno.lock") -Force
 ```
 
-**Global case** — the shipped `deno.json` has `"html2pptx": "./public/office-pptx/scripts/html2pptx.cjs"` which is wrong for the global layout (where `public/` doesn't exist — the directory is `office-pptx/scripts/html2pptx.cjs` directly). Copy to skill root and rewrite the import path:
+**Global case** — copy to skill root:
 
 **macOS / Linux:**
 
 ```bash
 cp "$SKILL_ROOT/resources/deno.json" "$SKILL_ROOT/deno.json"
 cp "$SKILL_ROOT/resources/deno.lock" "$SKILL_ROOT/deno.lock"
-python3 -c "
-import json
-d = json.load(open('$SKILL_ROOT/deno.json'))
-d['imports']['html2pptx'] = './office-pptx/scripts/html2pptx.cjs'
-json.dump(d, open('$SKILL_ROOT/deno.json', 'w'), indent=2)
-print(json.dumps(d, indent=2))
-"
 ```
 
 **Windows (PowerShell):**
@@ -419,10 +410,6 @@ print(json.dumps(d, indent=2))
 ```powershell
 Copy-Item (Join-Path $skillRoot "resources\deno.json") (Join-Path $skillRoot "deno.json") -Force
 Copy-Item (Join-Path $skillRoot "resources\deno.lock") (Join-Path $skillRoot "deno.lock") -Force
-$denoJsonPath = Join-Path $skillRoot "deno.json"
-$denoJson = Get-Content $denoJsonPath -Raw | ConvertFrom-Json
-$denoJson.imports.html2pptx = "./office-pptx/scripts/html2pptx.cjs"
-$denoJson | ConvertTo-Json -Depth 10 | Set-Content $denoJsonPath -Encoding UTF8NoBOM
 ```
 
 The `deno.lock` file does NOT need modification — it pins package integrity hashes, not import paths.
@@ -767,20 +754,22 @@ elif [ -d "$SKILL_ROOT/node_modules" ] && [ "$IS_GLOBAL" = true ]; then
   NODE_MODULES_DIR="$SKILL_ROOT/node_modules"
 fi
 
-cat > "$TOOLS_DIR/paths.json" << EOF
-{
-  "tools_dir": "$TOOLS_DIR",
-  "skill_root": "$SKILL_ROOT",
-  "uv": "$TOOLS_DIR/uv",
-  "deno": "$TOOLS_DIR/deno",
-  "soffice": "$TOOLS_DIR/soffice",
-  "node_modules_dir": "${NODE_MODULES_DIR:-null}",
-  "global_install": $IS_GLOBAL,
-  "env": {
-    "DENO_TLS_CA_STORE": "system"
-  }
+python3 -c "
+import json, os
+paths = {
+  'tools_dir': os.environ['TOOLS_DIR'],
+  'skill_root': os.environ['SKILL_ROOT'],
+  'uv': os.path.join(os.environ['TOOLS_DIR'], 'uv'),
+  'deno': os.path.join(os.environ['TOOLS_DIR'], 'deno'),
+  'soffice': os.path.join(os.environ['TOOLS_DIR'], 'soffice'),
+  'node_modules_dir': os.environ.get('NODE_MODULES_DIR') or None,
+  'global_install': os.environ['IS_GLOBAL'] == 'true',
+  'env': {'DENO_TLS_CA_STORE': 'system'}
 }
-EOF
+with open(os.path.join(os.environ['TOOLS_DIR'], 'paths.json'), 'w') as f:
+  json.dump(paths, f, indent=2)
+  f.write('\n')
+" TOOLS_DIR="$TOOLS_DIR" SKILL_ROOT="$SKILL_ROOT" NODE_MODULES_DIR="$NODE_MODULES_DIR" IS_GLOBAL="$IS_GLOBAL"
 ```
 
 **Windows (PowerShell):**
@@ -823,9 +812,9 @@ Run the checks below for the skills the user needs. Only test what's relevant. U
 
 ```bash
 TOOLS_DIR="$SKILL_ROOT/tools"
-UV=$(python3 -c "import json; d=json.load(open('$TOOLS_DIR/paths.json')); print(d['uv'] or 'uv')")
-DENO=$(python3 -c "import json; d=json.load(open('$TOOLS_DIR/paths.json')); print(d['deno'] or 'deno')")
-SOFFICE=$(python3 -c "import json; d=json.load(open('$TOOLS_DIR/paths.json')); print(d['soffice'] or 'soffice')")
+UV=$(python3 -c 'import json,os; d=json.load(open(os.environ["_PF"])); print(d["uv"] or "uv")' _PF="$TOOLS_DIR/paths.json")
+DENO=$(python3 -c 'import json,os; d=json.load(open(os.environ["_PF"])); print(d["deno"] or "deno")' _PF="$TOOLS_DIR/paths.json")
+SOFFICE=$(python3 -c 'import json,os; d=json.load(open(os.environ["_PF"])); print(d["soffice"] or "soffice")' _PF="$TOOLS_DIR/paths.json")
 ```
 
 ### Python skills (PPTX/DOCX/PDF/XLSX editing)
@@ -1040,13 +1029,13 @@ office_tool() {
   local paths_file
   for dir in ".agents/skills/office-install/tools" "$HOME/.agents/skills/office-install/tools"; do
     if [ -f "$dir/paths.json" ]; then
-      paths_file="$dir/paths.json"
+      paths_file="$dir"
       break
     fi
   done
   if [ -n "$paths_file" ]; then
     local resolved
-    resolved=$(python3 -c "import json,sys; d=json.load(open('$paths_file')); v=d.get('$tool'); print(v if v else '')" 2>/dev/null)
+    resolved=$(python3 -c 'import json,sys,os; d=json.load(open(os.environ["_PFILE"])); v=d.get(os.environ["_PNAME"]); print(v if v else "")' _PFILE="$paths_file/paths.json" _PNAME="$tool" 2>/dev/null)
     if [ -n "$resolved" ]; then
       echo "$resolved"
       return
@@ -1062,7 +1051,7 @@ For skills that need to run deno scripts, check `global_install` in `paths.json`
 
 ```bash
 TOOLS_DIR="$(office_tool tools_dir)"
-GLOBAL=$(python3 -c "import json; d=json.load(open('$TOOLS_DIR/paths.json')); print(d.get('global_install', False))" 2>/dev/null)
+GLOBAL=$(python3 -c 'import json,os; d=json.load(open(os.environ["_PF"])); print(d.get("global_install", False))' _PF="$TOOLS_DIR/paths.json" 2>/dev/null)
 
 if [ "$GLOBAL" = "True" ]; then
   DENO_CMD="./officedeno"

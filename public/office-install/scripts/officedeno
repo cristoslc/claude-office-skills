@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# officedeno — Runs deno with the office-skills import map.
+# Resolves --config to the installed deno.json so npm specifiers resolve.
+# Usage: officedeno <deno-subcommand> [args]
 set -euo pipefail
 
 SKILL_ROOT="__SKILL_ROOT_PLACEHOLDER__"

@@ -35,7 +35,16 @@ const PT_PER_PX = 0.75;
 const PX_PER_IN = 96;
 const EMU_PER_IN = 914400;
 
-async function launchBrowserWindows() {
+/**
+ * Launch Chrome on Windows by spawning the process directly and scanning stderr
+ * for the DevTools WebSocket URL, then connecting via CDP. Patches
+ * browser.close to also kill the child process so no orphaned Chrome remains.
+ * Needed because Playwright's default launcher fails on Windows with Deno's
+ * CJS interop due to extra stdio pipes.
+ * @param {string} [tmpDir] - Temp directory override (forwarded as TEMP/TMP env vars)
+ * @returns {Promise<import('playwright').Browser>}
+ */
+async function launchBrowserWindows(tmpDir) {
   const playwrightDir = path.join(process.env.LOCALAPPDATA || '', 'ms-playwright');
   let chromiumExe;
   if (fs.existsSync(playwrightDir)) {
@@ -51,27 +60,39 @@ async function launchBrowserWindows() {
     );
   }
 
+  const LAUNCH_TIMEOUT_MS = 10000;
+  const spawnOpts = {};
+  if (tmpDir) {
+    spawnOpts.env = { ...process.env, TEMP: tmpDir, TMP: tmpDir };
+  }
+
+  const args = [
+    '--headless=new', '--remote-debugging-port=0',
+    '--disable-gpu', '--no-first-run', '--disable-extensions',
+  ];
+  if (process.env.CHROME_NO_SANDBOX === '1') {
+    args.push('--no-sandbox');
+  }
+
   return new Promise((resolve, reject) => {
-    const proc = spawn(chromiumExe, [
-      '--headless=new', '--remote-debugging-port=0',
-      '--no-sandbox', '--disable-gpu', '--no-first-run', '--disable-extensions',
-    ]);
+    const proc = spawn(chromiumExe, args, spawnOpts);
     let resolved = false;
+    const cleanup = () => { try { proc.kill(); } catch(_) {} };
     const onData = (data) => {
       const m = data.toString().match(/DevTools listening on (ws:\/\/\S+)/);
       if (m && !resolved) {
         resolved = true;
         chromium.connectOverCDP(m[1]).then(browser => {
           const origClose = browser.close.bind(browser);
-          browser.close = async (...args) => { await origClose(...args); proc.kill(); };
+          browser.close = async (...args) => { await origClose(...args); cleanup(); };
           resolve(browser);
-        }).catch(reject);
+        }).catch(e => { cleanup(); reject(e); });
       }
     };
     proc.stderr.on('data', onData);
     proc.stdout.on('data', onData);
-    proc.on('error', reject);
-    setTimeout(() => { if (!resolved) reject(new Error('Chrome did not start within 10s')); }, 10000);
+    proc.on('error', e => { cleanup(); reject(e); });
+    setTimeout(() => { if (!resolved) { cleanup(); reject(new Error(`Chrome did not start within ${LAUNCH_TIMEOUT_MS / 1000}s`)); } }, LAUNCH_TIMEOUT_MS);
   });
 }
 
@@ -146,7 +167,8 @@ function validateTextBoxPosition(slideData, bodyDimensions) {
           if (Array.isArray(el.items)) return el.items.find(item => item.text)?.text || '';
           return '';
         };
-        const textPrefix = getText().substring(0, 50) + (getText().length > 50 ? '...' : '');
+        const txt = getText();
+        const textPrefix = txt.substring(0, 50) + (txt.length > 50 ? '...' : '');
 
         errors.push(
           `Text box "${textPrefix}" ends too close to bottom edge ` +
@@ -275,7 +297,7 @@ function addElements(slideData, targetSlide, pres) {
       if (el.style.align) textOptions.align = el.style.align;
       if (el.style.margin) textOptions.margin = el.style.margin;
       if (el.style.rotate !== undefined) textOptions.rotate = el.style.rotate;
-      if (el.style.transparency !== null && el.style.transparency !== undefined) textOptions.transparency = el.style.transparency;
+      if (el.style.transparency != null) textOptions.transparency = el.style.transparency;
 
       targetSlide.addText(el.text, textOptions);
     }
@@ -496,17 +518,10 @@ async function extractSlideData(page) {
               }
 
               // Validate: Check for margins on inline elements
-              if (computed.marginLeft && parseFloat(computed.marginLeft) > 0) {
-                errors.push(`Inline element <${node.tagName.toLowerCase()}> has margin-left which is not supported in PowerPoint. Remove margin from inline elements.`);
-              }
-              if (computed.marginRight && parseFloat(computed.marginRight) > 0) {
-                errors.push(`Inline element <${node.tagName.toLowerCase()}> has margin-right which is not supported in PowerPoint. Remove margin from inline elements.`);
-              }
-              if (computed.marginTop && parseFloat(computed.marginTop) > 0) {
-                errors.push(`Inline element <${node.tagName.toLowerCase()}> has margin-top which is not supported in PowerPoint. Remove margin from inline elements.`);
-              }
-              if (computed.marginBottom && parseFloat(computed.marginBottom) > 0) {
-                errors.push(`Inline element <${node.tagName.toLowerCase()}> has margin-bottom which is not supported in PowerPoint. Remove margin from inline elements.`);
+              for (const [prop, label] of [['marginLeft','margin-left'],['marginRight','margin-right'],['marginTop','margin-top'],['marginBottom','margin-bottom']]) {
+                if (computed[prop] && parseFloat(computed[prop]) > 0) {
+                  errors.push(`Inline element <${node.tagName.toLowerCase()}> has ${label} which is not supported in PowerPoint. Remove margin from inline elements.`);
+                }
               }
             }
 
@@ -968,7 +983,7 @@ async function html2pptx(htmlFile, pres, options = {}) {
     }
 
     const browser = process.platform === 'win32'
-      ? await launchBrowserWindows()
+      ? await launchBrowserWindows(tmpDir)
       : await chromium.launch(launchOptions);
 
     let bodyDimensions;

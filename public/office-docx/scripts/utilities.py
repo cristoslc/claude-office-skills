@@ -113,7 +113,9 @@ class XMLEditor:
         for elem in self.dom.getElementsByTagName(tag):
             # Check line_number filter
             if line_number is not None:
-                parse_pos = getattr(elem, "parse_position", (None,))
+                parse_pos = getattr(elem, "parse_position", None)
+                if parse_pos is None:
+                    continue
                 elem_line = parse_pos[0]
 
                 # Handle both single line number and range
