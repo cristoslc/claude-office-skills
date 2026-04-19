@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.2.3] - 2026-04-17
+
+### Fixes
+
+#### Prism Review Bug Fixes
+
+Addressed critical issues identified in multi-agent codebase review:
+
+- **fill_pdf_form_with_annotations.py**: Fixed StopIteration exception when `page_number` not found in `fields.json`. The `next()` call now uses a default value and raises a proper ValueError.
+- **fill_pdf_form_with_annotations.py**: Fixed KeyError risk when `entry_text` exists but isn't a dict. Added type validation before accessing dictionary methods.
+- **recalc.py**: Fixed inverted error detection logic that caused false "macro not configured" errors for unrelated failures.
+- **recalc.py**: Added `validate_excel_file()` function to prevent path traversal attacks. File paths are now validated to be within the current directory and have valid Excel extensions.
+- **recalc.py**: Added timeout parameter validation (1-300 seconds range) with proper error handling.
+- **utilities.py**: Fixed AttributeError risk when `parse_position` attribute is missing on XML elements.
+
 ## [1.2.2] - 2026-04-17
 
 ### Fixes
