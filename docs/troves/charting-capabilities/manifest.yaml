@@ -1,0 +1,86 @@
+id: charting-capabilities
+created: 2026-04-23
+tags:
+  - charting
+  - visualization
+  - graphs
+  - office-formats
+  - powerpoint
+  - excel
+  - word
+  - pptx
+  - xlsx
+  - docx
+  - cross-format
+freshness-ttl: 180d
+
+sources:
+  - id: pptx-ooxml-spec
+    type: web
+    url: https://docs.aspose.com/slides/java/presentationml-pptx-xml/
+    title: "PresentationML (PPTX, XML) - Aspose.Slides Documentation"
+    fetched: 2026-04-23
+    hash: d998f7055423856f1b4676662c85f26e167c790965d9a1fb2a8d739b8cb9e990
+
+  - id: cross-platform-powerpoint-compat
+    type: web
+    url: https://support.office.com/en-us/article/Cross-Platform-PowerPoint-Compatibility-0eebb4f1-c329-4c50-b83c-3af1bab640de
+    title: "Cross-platform PowerPoint compatibility - Office Support"
+    fetched: 2026-04-23
+    hash: d7bcd592f4e4d508963afe55c96915cca706a0f8f643305fc02275a56c11e589
+
+  - id: chart-embedded-worksheet
+    type: web
+    url: https://python-pptx.readthedocs.io/en/stable/dev/analysis/cht-access-xlsx.html
+    title: "Chart - Embedded Worksheet — python-pptx documentation"
+    fetched: 2026-04-23
+    hash: 449d5dc98412614326d8f95d4134fbb905a5f4097247803fb196b4094b518243
+
+  - id: cross-format-visualization
+    type: web
+    url: https://carbone.io/documentation/design/advanced-features/charts.html
+    title: "How to create charts in documents? - Carbone"
+    fetched: 2026-04-23
+    hash: c464074b4f9111bd7807a0ab6b430668a12adb2594b43f543276a313266ac9b3
+
+  - id: pptx-chart-editing-capabilities
+    type: web
+    url: https://support.microsoft.com/en-us/office/change-the-data-in-an-existing-chart-539c9840-7412-4da3-ab06-fcf318e996df
+    title: "Change the data in an existing chart - Microsoft Support"
+    fetched: 2026-04-23
+    hash: aa176c214387651285e9f2fc92e234edc0743678f7b0bbc04cf1441ea1f14fd8
+
+  - id: svg-rendering-fallback
+    type: web
+    url: https://pypi.org/project/pygal/
+    title: "Pygal: Python SVG Charting Library"
+    fetched: 2026-04-23
+    hash: 4f3ed2f3d5ad8d677b590c49e438da89d45a9de5345203fdf23ee4e4c58b2ac4
+
+  - id: html-js-charting-libraries
+    type: web
+    url: https://www.chartjs.org/
+    title: "Chart.js: Simple yet flexible JavaScript charting library"
+    fetched: 2026-04-23
+    hash: e69a9cf9ef65c237a34e50ff80c790e4c847e11be4605dd519fd4bc88c72b0e0
+
+  - id: python-charting-options
+    type: web
+    url: https://matplotlib.org/
+    title: "Matplotlib: Python plotting library"
+    fetched: 2026-04-23
+    hash: 455495b5a2de3c571495fe7c6a4b2c4d0a574ef5d14f0786d704e63e028ac39d
+
+referenced-by: []
+
+history:
+  - event: created
+    date: 2026-04-23
+    commit: "--"
+    sources: 5
+  
+  - event: extended
+    date: 2026-04-23
+    commit: "--"
+    sources: 8
+    supplemental_files: 1
