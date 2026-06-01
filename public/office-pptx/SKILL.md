@@ -175,6 +175,7 @@ When creating a new PowerPoint presentation from scratch, use the **html2pptx** 
    - Global install: `DENO_TLS_CA_STORE=system ./officedeno run --allow-all script.js` (or `.\officedeno.ps1` on Windows)
    - Use the `html2pptx()` function to process each HTML file
    - Add charts and tables to placeholder areas using PptxGenJS API
+   - Add speaker notes to any slide via `slide.addNotes('Your speaker notes here')` after conversion
    - Save the presentation using `pptx.writeFile()`
 4. **Visual validation (two-pass)**:
 

@@ -283,6 +283,29 @@ const chartArea = placeholders.find(p => p.id === 'chart-area');
 slide.addChart(pptx.charts.LINE, data, chartArea);
 ```
 
+### Adding Speaker Notes
+
+Speaker notes can be added to any slide using PptxGenJS's built-in `addNotes()` API. Call it on the slide object returned by `html2pptx()`:
+
+```javascript
+const { slide } = await html2pptx('slide.html', pptx);
+slide.addNotes('These speaker notes appear in PowerPoint presenter view.');
+```
+
+The notes are plain text only. Rich formatting (bold, italic, lists) is not supported in speaker notes via this API.
+
+**Per-slide pattern:**
+
+```javascript
+const { slide: slide1 } = await html2pptx('title.html', pptx);
+slide1.addNotes('Welcome the audience and introduce the topic.');
+
+const { slide: slide2 } = await html2pptx('data.html', pptx);
+slide2.addNotes('Walk through the key chart: Q3 spike driven by new product launch.');
+```
+
+PptxGenJS handles all OOXML internals (notes slide XML, notes master, Content_Types, relationships) — no manual XML editing needed.
+
 ### Complete Example
 
 ```javascript
@@ -297,6 +320,7 @@ async function createPresentation() {
 
     // Slide 1: Title
     const { slide: slide1 } = await html2pptx('slides/title.html', pptx);
+    slide1.addNotes('Welcome the audience. Introduce company and quarterly overview.');
 
     // Slide 2: Content with chart
     const { slide: slide2, placeholders } = await html2pptx('slides/data.html', pptx);
