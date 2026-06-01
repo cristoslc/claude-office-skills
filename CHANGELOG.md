@@ -1,88 +1,81 @@
 # Changelog
 
-## [1.2.3] - 2026-04-17
+All notable changes to this project will be documented in this file.
 
-### Fixes
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-#### Prism Review Bug Fixes
+## [Unreleased]
 
-Addressed critical issues identified in multi-agent codebase review:
+### Added
 
-- **fill_pdf_form_with_annotations.py**: Fixed StopIteration exception when `page_number` not found in `fields.json`. The `next()` call now uses a default value and raises a proper ValueError.
-- **fill_pdf_form_with_annotations.py**: Fixed KeyError risk when `entry_text` exists but isn't a dict. Added type validation before accessing dictionary methods.
-- **recalc.py**: Fixed inverted error detection logic that caused false "macro not configured" errors for unrelated failures.
-- **recalc.py**: Added `validate_excel_file()` function to prevent path traversal attacks. File paths are now validated to be within the current directory and have valid Excel extensions.
-- **recalc.py**: Added timeout parameter validation (1-300 seconds range) with proper error handling.
-- **utilities.py**: Fixed AttributeError risk when `parse_position` attribute is missing on XML elements.
+- `office-pptx`: Document `slide.addNotes()` API in html2pptx.md and SKILL.md
+  so agents can add speaker notes to any slide after HTML conversion
+- `docs/`: Trove `pptx-speaker-notes` — PptxGenJS speaker notes API and
+  OOXML notes slide structure reference
 
-## [1.2.2] - 2026-04-17
+## [1.2.3] - 2026-05-XX
 
-### Fixes
+### Fixed
 
-#### Deno 2 compatibility, BOM issues, and Playwright paths
+- Prism review findings: exception handling, input validation, and security
+  hardening
 
-Fixed several compatibility and path issues in the html2pptx skill:
+## [1.2.2] - 2026-05-XX
 
-- Fixed Playwright executable path resolution to work with Deno 2.x's updated module resolution
-- Resolved BOM (Byte Order Mark) issues when processing UTF-8 encoded files
-- Corrected platform detection for cross-platform browser launching
+### Fixed
 
-### Documentation
+- Deno 2 compatibility, BOM issues, and Playwright path resolution
+- `office-install`: Add non-interactive execution requirement
 
-#### Non-interactive execution requirement
+## [1.2.1] - 2026-05-XX
 
-Added documentation clarifying that all skill scripts must support non-interactive execution modes, ensuring reliable operation in automated and CI/CD environments.
+### Fixed
 
-## [1.2.1] - 2026-04-10
+- Bump Pillow minimum to 10.2.0 (CVE-2023-50447)
+- `html2pptx`: Windows compatibility — CDP launch and CJS conversion
 
-### Features
+## [1.2.0] - 2026-05-XX
 
-#### Windows-compatible browser launch for html2pptx
+### Added
 
-Deno on Windows does not support the extra stdio pipes that Playwright's default browser launch requires, causing a `TypeError: Cannot read properties of undefined` crash. The new `launchBrowserWindows()` function bypasses this by spawning Chrome directly and connecting via the Chrome DevTools Protocol (CDP), scanning stderr for the WebSocket URL. This path is gated on `process.platform === 'win32'` — macOS and Linux continue using Playwright's standard launcher.
+- Legacy skill detection in `office-install`
+- `office-install`: Ship `deno.json`/`deno.lock` in `resources/` for npm
+  dependency resolution
+- Trove: `skill-writing-best-practices` (7 sources)
 
-- Converted `html2pptx.js` from ESM imports to CJS (`require`/`module.exports`) so Deno's CJS interop resolves bare module specifiers like `playwright` and `sharp` correctly. The skill is consumed via `require()` per the documented pattern; ESM added no value and broke that interop.
-- Added `process.env.TEMP` and `process.env.TMP` fallbacks to the `tmpDir` default, since Windows doesn't set `TMPDIR`.
+### Changed
 
-### Supporting Changes
+- `AGENTS.md` refactored to be contributor-only; consumer instructions
+  migrated to SKILL.md files
+- `office-install` rewritten for standalone tool installs and proper
+  skill distribution
+- Toolchain migrated from `venv`/`npm` to `uv`/`deno`
 
-- Bumped minimum Pillow version from `>=10.0.0` to `>=10.2.0` to address CVE-2023-50447 (arbitrary code execution via `PIL.ImageMath.eval`).
+## [1.1.0] - 2026-05-XX
 
-## [1.2.0] - 2026-04-10
+### Added
 
-### Features
+- Swain skills installation
+- Mandatory visual verification (two-pass) to all skill docs
 
-#### Standalone Tool Distribution
-Rewrote the office-install skill to support standalone tool installs and proper skill distribution, enabling agentic setup without global system pollution.
+### Changed
 
-- Added legacy skill detection to office-install for smoother migrations.
-- Shipped deno.json and deno.lock within the office-install resources for reliable npm dependency resolution via Deno.
-- Migrated the project toolchain from venv/npm to uv/deno for faster, portable execution.
+- Repository renamed to `office-skills`; all skills prefixed with `office-`
 
-### Supporting Changes
+## [1.0.0] - 2026-05-XX
 
-- Migrated AGENTS.md to be contributor-only, moving all consumer-facing instructions into individual SKILL.md files.
-- Updated README.md to reflect the new portable toolchain and setup guidance.
+### Added
 
-### Features
+- Initial release: Office document manipulation skills (PPTX, DOCX, XLSX,
+  PDF, Install)
+- Skills for creating, editing, and analyzing Office documents
+- Environment setup via `office-install` skill
 
-#### Consistent office-* namespace
-
-All skill directories now follow the `office-*` naming convention (`office-pptx/`, `office-docx/`, `office-pdf/`, `office-xlsx/`, `office-install/`). Path references updated across AGENTS.md, README, skills-system.md, and all planning artifacts.
-
-#### Agent-facing install skill
-
-New `office-install` skill provides progressive, environment-adaptive setup guidance. The agent detects the platform, checks what's present, and acquires missing tools using the least-privileged method available — including portable zip-extracted binaries for corporate Windows where elevation is unavailable.
-
-- Visual verification is now mandatory in all PPTX and DOCX skill workflows (two-pass: thumbnail grid + per-slide detail check)
-
-### Planned
-
-#### Zero-install portable toolchain
-
-Six specs designed under EPIC-001 to eliminate all installation steps. PEP 723 inline metadata for Python scripts (SPEC-001), system tool replacement with bundled Python packages (SPEC-002), Deno migration for html2pptx (SPEC-003), cross-platform wrapper scripts with tool discovery (SPEC-004), documentation updates (SPEC-005), and the install skill (SPEC-006). Target: clone the repo and run with only uv, deno, and LibreOffice — all installable without elevation.
-
-### Supporting Changes
-
-- Removed swain governance skills and runtime artifacts (.agents/, skills-lock.json, deno.lock, ROADMAP.md) from git tracking — these are runtime-only and now gitignored
-- Gitignore consolidated: .agents/, .claude/, tools/, deno.lock, skills-lock.json, ROADMAP.md
+[Unreleased]: https://github.com/cristoslc/office-skills/compare/v1.2.3...HEAD
+[1.2.3]: https://github.com/cristoslc/office-skills/releases/tag/v1.2.3
+[1.2.2]: https://github.com/cristoslc/office-skills/releases/tag/v1.2.2
+[1.2.1]: https://github.com/cristoslc/office-skills/releases/tag/v1.2.1
+[1.2.0]: https://github.com/cristoslc/office-skills/releases/tag/v1.2.0
+[1.1.0]: https://github.com/cristoslc/office-skills/releases/tag/v1.1.0
+[1.0.0]: https://github.com/cristoslc/office-skills/releases/tag/v1.0.0
