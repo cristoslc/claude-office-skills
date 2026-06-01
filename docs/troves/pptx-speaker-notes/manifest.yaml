@@ -1,0 +1,40 @@
+# Trove: pptx-speaker-notes
+# Speaker notes in PowerPoint — PptxGenJS API and OOXML structure
+
+trove-id: pptx-speaker-notes
+created: 2026-06-01
+refreshed: 2026-06-01
+tags:
+  - pptx
+  - speaker-notes
+  - addNotes
+  - PptxGenJS
+  - ooxml
+  - notes-slide
+
+freshness-ttl:
+  source: 365d
+  web: 180d
+
+sources:
+  - id: pptxgenjs-speaker-notes
+    type: web
+    url: https://gitbrent.github.io/PptxGenJS/docs/speaker-notes/
+    title: PptxGenJS Speaker Notes API Docs
+    fetched: 2026-06-01
+    hash: 3dad3164c94bb53ab74a97fa815932a636b20a10b096ee252a999e261967d175
+    notes: Official PptxGenJS documentation for the addNotes() API
+
+  - id: ooxml-notes-slide-structure
+    type: documentation
+    url: project-internal
+    title: OOXML Notes Slide Structure (from project schemas and validation code)
+    fetched: 2026-06-01
+    hash: aa4a0b14401d6732a17166802ab50bf804e8eda738be6d133a26534e88a03509
+    notes: Derived from pml.xsd schema and ppxt.py validation code in this project
+
+history:
+  - event: created
+    date: 2026-06-01
+    commit: "--"
+    sources: 2
