@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.4] - 2026-06-01
+
 ### Added
 
 - `office-pptx`: Document `slide.addNotes()` API in html2pptx.md and SKILL.md
   so agents can add speaker notes to any slide after HTML conversion
 - `docs/`: Trove `pptx-speaker-notes` — PptxGenJS speaker notes API and
   OOXML notes slide structure reference
+- `CHANGELOG.md`: Project changelog
 
 ## [1.2.3] - 2026-05-XX
 
@@ -72,7 +75,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Skills for creating, editing, and analyzing Office documents
 - Environment setup via `office-install` skill
 
-[Unreleased]: https://github.com/cristoslc/office-skills/compare/v1.2.3...HEAD
+[Unreleased]: https://github.com/cristoslc/office-skills/compare/v1.2.4...HEAD
+[1.2.4]: https://github.com/cristoslc/office-skills/releases/tag/v1.2.4
 [1.2.3]: https://github.com/cristoslc/office-skills/releases/tag/v1.2.3
 [1.2.2]: https://github.com/cristoslc/office-skills/releases/tag/v1.2.2
 [1.2.1]: https://github.com/cristoslc/office-skills/releases/tag/v1.2.1
